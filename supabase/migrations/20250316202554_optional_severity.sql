@@ -1,0 +1,2 @@
+ALTER TABLE violations
+ALTER COLUMN severity DROP NOT NULL;
