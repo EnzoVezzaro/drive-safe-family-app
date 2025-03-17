@@ -42,13 +42,6 @@ const Auth = () => {
 
   return (
     <View style={styles.container}>
-      {!isLoggedIn && (
-        <View style={styles.buttonContainer}>
-          <Button title="Sign Up" onPress={() => setActiveScreen('SignUp')} />
-          <Button title="Sign In" onPress={() => setActiveScreen('SignIn')} />
-          <Button title="Forgot Password" onPress={() => setActiveScreen('ForgotPassword')} />
-        </View>
-      )}
       {content}
     </View>
   );
@@ -57,25 +50,7 @@ const Auth = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  content: {
-    width: '100%',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 20,
-  },
+  }
 });
 
 export default Auth;

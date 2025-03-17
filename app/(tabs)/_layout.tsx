@@ -1,25 +1,17 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { Car, Home, Medal, Settings, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import SensorDataCollector from '../../components/SensorDataCollector';
 import { useAppSelector } from '../../hooks/useRedux';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export default function TabLayout() {
   const { t } = useTranslation();
   const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
-  const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isMounted && !isLoggedIn) {
-      router.replace('/auth');
-    }
-  }, [isLoggedIn, isMounted]);
+  if (!isLoggedIn) {
+    return <Redirect href="/auth" />;
+  }
 
   return (
     <>

@@ -39,6 +39,9 @@ const Profile = () => {
         .select('*')
         .eq('user_id', userId);
 
+        console.log('viol: ', userId);
+        
+
       if (error) {
         console.error(t('profile.fetchError'), error);
       } else {

@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 const Drive = () => {
   const { t } = useTranslation();
   const dispatch: AppDispatch = useDispatch();
-  const navigation = useNavigation<NavigationProp<RootParamList, 'Profile'>>();
+  const navigation = useNavigation<NavigationProp<RootParamList, 'profile'>>();
   const userId = useSelector((state: RootState) => state.auth.userId);
   const speed = useSelector((state: RootState) => state.driving.speed);
   const acceleration = useSelector((state: RootState) => state.driving.acceleration);
@@ -25,7 +25,7 @@ const Drive = () => {
       dispatch(fetchDrivingData(userId));
     } else {
       // If userId is not available, navigate to the profile screen
-      navigation.navigate('Profile');
+      navigation.navigate('profile');
     }
   }, [dispatch, userId, navigation]);
 
