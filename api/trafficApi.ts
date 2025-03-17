@@ -2,21 +2,42 @@ import { supabase } from '../lib/supabase';
 import axios from 'axios';
 
 export async function getSpeedLimit(latitude: number, longitude: number): Promise<number> {
-  // remove when discover how to do it
-  return 55;
-  const accessToken = process.env.EXPO_PUBLIC_OPEN_ROUTE;
-  const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${accessToken}&start=${latitude},${longitude}&end=${latitude},${longitude}`;
+  const accessToken = process.env.EXPO_PUBLIC_TOMTOM_API_KEY;
+
+  if (!accessToken) {
+    console.error('API key is missing.');
+    return 55; // Default speed limit
+  }
+
+  // First, get the reverse geocode data
+  const reverseGeoUrl = `https://api.tomtom.com/search/2/reverseGeocode/${latitude},${longitude}.json?key=${accessToken}`;
 
   try {
-    console.log('url: ', url);
-    const response = await axios.get(url);
-    console.log('responsE: ', response);
-    
-    const speedLimit = response.data.routes[0].legs[0].steps[0].driving_side;
-    return speedLimit || 55;  // Default speed limit
+    console.log('Fetching Reverse Geocode:', reverseGeoUrl);
+    const reverseResponse = await axios.get(reverseGeoUrl);
+
+    if (!reverseResponse.data || !reverseResponse.data.addresses.length) {
+      console.warn('No reverse geocode data found.');
+      return 55; // Default speed limit
+    }
+
+    // Use the point for the Traffic Flow API
+    const trafficUrl = `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${accessToken}&point=${latitude},${longitude}`;
+    console.log('Fetching Traffic Data:', trafficUrl);
+
+    const trafficResponse = await axios.get(trafficUrl);
+
+    if (!trafficResponse.data || !trafficResponse.data.flowSegmentData) {
+      console.warn('No traffic data found.');
+      return 55; // Default speed limit
+    }
+
+    const speedLimit = trafficResponse.data.flowSegmentData.freeFlowSpeed; // Speed limit in km/h
+    console.log(`Speed Limit Found: ${speedLimit} km/h`);
+    return speedLimit || 55; // Default to 55 if missing
   } catch (error) {
     console.error('Error fetching speed limit:', error);
-    return 55;  // Default speed limit
+    return 55; // Default speed limit in case of error
   }
 }
 

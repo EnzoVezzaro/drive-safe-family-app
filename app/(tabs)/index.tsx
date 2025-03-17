@@ -1,69 +1,139 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
-import { Text, Card } from 'react-native-paper';
+import React from 'react';
+import { View, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getUserRank, getDrivingStats } from '../../lib/supabase';
-import { ScrollView } from 'react-native';
+import { LineChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen() {
-  const userId = useSelector((state: RootState) => state.auth.userId);
-  const drivingScore = useSelector((state: RootState) => state.driving.drivingScore);
-  const [userRank, setUserRank] = useState<number | null>(null);
-  const [drivingStats, setDrivingStats] = useState<{ totalTrips: number; mileage: number; timeDriven: number } | null>(null);
-
-  useEffect(() => {
-    async function fetchUserData() {
-      if (userId) {
-        const rank = await getUserRank(userId);
-        setUserRank(rank);
-
-        const stats = await getDrivingStats(userId);
-        setDrivingStats(stats);
+  const userId = useSelector((state: RootState) => state.auth.userId ?? 'Richard');
+  const drivingScore = useSelector((state: RootState) => state.driving.drivingScore || 72);
+  
+  const chartData = {
+    labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+    datasets: [
+      {
+        data: [10, 25, 45, 48, 52, 60],
+        color: (opacity = 1) => `rgba(75, 0, 130, ${opacity})`, // purple
+        strokeWidth: 2
+      },
+      {
+        data: [5, 20, 35, 45, 48, 42],
+        color: (opacity = 1) => `rgba(65, 105, 225, ${opacity})`, // blue
+        strokeWidth: 2
+      },
+      {
+        data: [1, 5, 15, 25, 30, 35],
+        color: (opacity = 1) => `rgba(0, 188, 212, ${opacity})`, // cyan
+        strokeWidth: 2
       }
-    }
+    ]
+  };
 
-    fetchUserData();
-  }, [userId]);
+  const chartConfig = {
+    backgroundGradientFrom: '#fff',
+    backgroundGradientTo: '#fff',
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    strokeWidth: 2,
+    decimalPlaces: 0,
+    fillShadowGradientOpacity: 0,
+    propsForDots: {
+      r: '0',
+    },
+    propsForBackgroundLines: {
+      strokeWidth: 0
+    },
+  };
+
+  // Circular progress calculation
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (drivingScore / 100) * circumference;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
         {/* Profile Section */}
-        <View style={styles.profileContainer}>
-          <Image
-            source={{ uri: 'https://randomuser.me/api/portraits/women/1.jpg' }}
-            style={styles.avatar}
-          />
-          <View style={styles.profileInfo}>
-            <Text variant="titleLarge">{userId}</Text>
-            <Text variant="bodyMedium">Verified Account</Text>
+        <View style={styles.headerCard}>
+          <View style={styles.profileSection}>
+            <View style={styles.avatarContainer}>
+              <Image 
+                source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }} 
+                style={styles.avatar} 
+              />
+              <View style={styles.starBadge}>
+                <Text style={styles.starText}>★</Text>
+              </View>
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>Hi, Richard</Text>
+              <Text style={styles.userSubtext}>Glad to see you again!</Text>
+            </View>
           </View>
-          <Text variant="titleMedium" style={styles.rank}>Rank #{userRank !== null ? userRank : 'N/A'}</Text>
         </View>
 
-        {/* Safe Driving Score */}
-        <Card style={styles.scoreCard}>
-          <Card.Content>
-            <Text variant="displayMedium" style={styles.score}>{drivingScore}</Text>
-            <Text variant="titleMedium" style={styles.scoreLabel}>Safe Driving Score</Text>
-          </Card.Content>
-        </Card>
+        {/* Start a new route */}
+        <TouchableOpacity style={styles.startRouteButton}>
+          <Text style={styles.startRouteText}>Start a new route</Text>
+        </TouchableOpacity>
 
-        {/* Statistics */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text variant="titleLarge">{drivingStats?.totalTrips || 0}</Text>
-            <Text variant="bodyMedium">Total Trips</Text>
+        {/* Driving Skill Score */}
+        <View style={styles.skillCard}>
+          <Text style={styles.sectionTitle}>Average driving skill</Text>
+          
+          <View style={styles.circularProgressContainer}>
+            <View style={styles.circularProgress}>
+              <View style={styles.progressBackgroundCircle} />
+              <View style={styles.progressIndicator} />
+              <Text style={styles.progressPercentage}>72%</Text>
+              <Text style={styles.progressLabel}>current level</Text>
+            </View>
           </View>
-          <View style={styles.statItem}>
-            <Text variant="titleLarge">{drivingStats?.mileage || 0}</Text>
-            <Text variant="bodyMedium">Mileage</Text>
+          
+          {/* Driving Stats */}
+          <View style={styles.drivingStatsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Reaction <Text style={styles.statValuePurple}>92%</Text></Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Smoothness <Text style={styles.statValueBlue}>74%</Text></Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Wariness <Text style={styles.statValueCyan}>56%</Text></Text>
+            </View>
           </View>
-          <View style={styles.statItem}>
-            <Text variant="titleLarge">{drivingStats?.timeDriven || 0}</Text>
-            <Text variant="bodyMedium">Time Driven</Text>
+        </View>
+
+        {/* Progress Chart */}
+        <View style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressTitle}>Progress</Text>
+            <Text style={styles.seeDetailsText}>See details</Text>
+          </View>
+          
+          <View style={styles.chartContainer}>
+            <LineChart
+              data={chartData}
+              width={screenWidth - 60}
+              height={120}
+              chartConfig={chartConfig}
+              bezier
+              withVerticalLines={false}
+              withHorizontalLines={false}
+              withVerticalLabels={true}
+              withHorizontalLabels={false}
+              style={styles.chart}
+            />
+            <View style={styles.selectedPointContainer}>
+              <View style={styles.selectedPoint} />
+              <View style={styles.selectedPointLabel}>
+                <Text style={styles.selectedPointText}>48%</Text>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -72,48 +142,210 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#f0f2f5',
   },
-  profileContainer: {
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  headerCard: {
+    backgroundColor: '#343b6e',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 12,
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10,
   },
-  profileInfo: {
+  starBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#9370DB',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  starText: {
+    color: 'white',
+    fontSize: 12,
+  },
+  userInfo: {
     flex: 1,
   },
-  rank: {
+  userName: {
+    color: 'white',
+    fontSize: 24,
     fontWeight: 'bold',
   },
-  scoreCard: {
+  userSubtext: {
+    color: '#d0d0d0',
+    fontSize: 14,
+  },
+  startRouteButton: {
+    backgroundColor: '#3dc2ff',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  startRouteText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  skillCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  circularProgressContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
   },
-  score: {
-    textAlign: 'center',
+  circularProgress: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  progressBackgroundCircle: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 10,
+    borderColor: '#f0f0f0',
+  },
+  progressIndicator: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 10,
+    borderColor: '#6366f1',
+    borderLeftColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightColor: '#6366f1',
+    borderTopColor: '#6366f1',
+    transform: [{ rotate: '45deg' }],
+  },
+  progressPercentage: {
+    fontSize: 36,
     fontWeight: 'bold',
+    color: '#343b6e',
   },
-  scoreLabel: {
-    textAlign: 'center',
-    marginTop: 10,
+  progressLabel: {
+    fontSize: 12,
+    color: '#666',
   },
-  statsContainer: {
+  drivingStatsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 20,
+    width: '100%',
+    paddingHorizontal: 10,
   },
   statItem: {
     alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  statValuePurple: {
+    color: '#9370DB',
+    fontWeight: 'bold',
+  },
+  statValueBlue: {
+    color: '#6366f1',
+    fontWeight: 'bold',
+  },
+  statValueCyan: {
+    color: '#4DD0E1',
+    fontWeight: 'bold',
+  },
+  progressCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  progressTitle: {
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '500',
+  },
+  seeDetailsText: {
+    color: '#6366f1',
+    fontSize: 14,
+  },
+  chartContainer: {
+    position: 'relative',
+    alignItems: 'center',
+  },
+  chart: {
+    borderRadius: 8,
+  },
+  selectedPointContainer: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    alignItems: 'center',
+    transform: [{ translateX: -15 }, { translateY: 0 }],
+  },
+  selectedPoint: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#3dc2ff',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  selectedPointLabel: {
+    backgroundColor: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#3dc2ff',
+    marginTop: -25,
+  },
+  selectedPointText: {
+    color: '#333',
+    fontSize: 12,
   },
 });
