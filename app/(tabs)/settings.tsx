@@ -1,5 +1,5 @@
 // app/settings.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal } from 'react-native';
 import { Text, Switch } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,14 +7,37 @@ import { Button } from 'react-native';
 import i18n from '../../i18n';
 import { useTranslation } from 'react-i18next';
 import * as Localization from 'expo-localization';
+import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
+import { useNavigation } from '@react-navigation/native';
+import { signOut } from '../../lib/supabase';
+import { clearAuth } from '../../store/authSlice';
 
 const Settings = () => {
+  const navigation = useNavigation<any>();
   const { t } = useTranslation();
+  const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
+  const dispatch = useAppDispatch();
   const [notificationEnabled, setNotificationEnabled] = useState(false);
   const [locationTrackingEnabled, setLocationTrackingEnabled] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('es');
+
+  const handleSignOut = async () => {
+    await signOut();
+    dispatch(clearAuth());
+    navigation.replace('auth');
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigation.navigate('auth');
+    }
+  }, [isLoggedIn, navigation]);
+
+  if (!isLoggedIn) {
+    return null;
+  }
 
   const handleNotificationToggle = () => {
     setNotificationEnabled(!notificationEnabled);
@@ -58,6 +81,8 @@ const Settings = () => {
             <Text>{selectedLanguage === 'en' ? t('settings.english') : t('settings.spanish')}</Text>
           </TouchableOpacity>
         </View>
+
+        <Button title="Sign Out" onPress={handleSignOut} />
 
         <Modal
           animationType="fade"

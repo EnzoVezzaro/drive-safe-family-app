@@ -5,7 +5,7 @@ interface AuthState {
   userId: string | null;
   email: string | null;
   isLoggedIn: boolean;
-  role: 'parent' | 'family' | null;
+  role: 'parent' | 'family_member' | null;
   loading: boolean;
   error: string | null;
 }
@@ -21,9 +21,9 @@ const initialState: AuthState = {
 
 export const signUp = createAsyncThunk(
   'auth/signUp',
-  async ({ email, password, role }: { email: string; password: string; role: 'parent' | 'family' }, { rejectWithValue }) => {
+  async ({ email, password, role }: { email: string; password: string; role: string }, { rejectWithValue }) => {
     try {
-      const { data, error } = await supabaseSignUp({ email, password });
+      const { data, error } = await supabaseSignUp({ email, password, role });
       if (error) {
         return rejectWithValue(error.message);
       }
@@ -59,11 +59,11 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setAuth: (state, action: PayloadAction<{ userId: string; email: string; role: 'parent' | 'family' }>) => {
+    setAuth: (state, action: PayloadAction<{ userId: string; email: string; role: string }>) => {
       state.userId = action.payload.userId;
       state.email = action.payload.email;
       state.isLoggedIn = true;
-      state.role = action.payload.role;
+      state.role = action.payload.role as 'parent' | 'family_member';
     },
     clearAuth: (state) => {
       state.userId = null;
@@ -78,12 +78,12 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(signUp.fulfilled, (state, action: PayloadAction<{ userId: string; email: string; role: 'parent' | 'family' }>) => {
+      .addCase(signUp.fulfilled, (state, action: PayloadAction<{ userId: string; email: string; role: string }>) => {
         state.loading = false;
         state.userId = action.payload.userId;
         state.email = action.payload.email;
         state.isLoggedIn = true;
-        state.role = action.payload.role;
+        state.role = action.payload.role as 'parent' | 'family_member';
       })
       .addCase(signUp.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
@@ -93,12 +93,12 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(signIn.fulfilled, (state, action: PayloadAction<{ userId: string; email: string; role: 'family' }>) => {
+      .addCase(signIn.fulfilled, (state, action: PayloadAction<{ userId: string; email: string; role: string }>) => {
         state.loading = false;
         state.userId = action.payload.userId;
         state.email = action.payload.email;
         state.isLoggedIn = true;
-        state.role = action.payload.role;
+        state.role = action.payload.role as 'parent' | 'family_member';
       })
       .addCase(signIn.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;

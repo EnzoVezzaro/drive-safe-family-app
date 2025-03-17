@@ -8,6 +8,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
+import { useAppSelector } from '../../hooks/useRedux';
 
 const screenWidth = Dimensions.get('window').width;
 

@@ -9,14 +9,30 @@ const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey ||
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function signUp({ email, password }: { email: string; password: string }) {
+export async function signUp({ email, password, role }: { email: string; password: string; role: string }) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${process.env.EXPO_PUBLIC_SITE_URL}/api/auth/callback`,
+      data: {
+        role: role,
+      }
     },
   });
+
+  if (data && data.user) {
+    const { error: userError } = await supabase
+      .from('users')
+      .insert([
+        { id: data.user.id, email: email, role: role },
+      ]);
+
+    if (userError) {
+      console.error('Error creating user record:', userError);
+    }
+  }
+
   return { data, error };
 }
 
@@ -24,6 +40,18 @@ export async function signIn({ email, password }: { email: string; password: str
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
+  });
+  return { data, error };
+}
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  return { error };
+}
+
+export async function passwordReset({ email }: { email: string }) {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.EXPO_PUBLIC_SITE_URL}/api/auth/callback`,
   });
   return { data, error };
 }
