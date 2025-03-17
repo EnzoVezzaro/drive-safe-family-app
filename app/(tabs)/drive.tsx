@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Animated, PanResponder } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Animated, PanResponder, TouchableWithoutFeedback, StatusBar } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
@@ -12,6 +12,7 @@ const Drive = () => {
   const navigation = useNavigation<NavigationProp<RootParamList, 'Profile'>>();
   const userId = useSelector((state: RootState) => state.auth.userId);
   const speed = useSelector((state: RootState) => state.driving.speed);
+  const acceleration = useSelector((state: RootState) => state.driving.acceleration);
   const violations = useSelector((state: RootState) => state.driving.violations);
   const score = useSelector((state: RootState) => state.driving.drivingScore);
 
@@ -81,90 +82,97 @@ const Drive = () => {
   const mapImage = "https://i.imgur.com/FjGEME0.png"; // Placeholder - use your map image
 
   return (
-    <View style={styles.container}>
-      {/* Map Section */}
-      <View style={styles.mapContainer}>
-        <Image 
-          source={{ uri: mapImage }} 
-          style={styles.mapImage} 
-          resizeMode="cover"
-        />
-        
-        {/* Speed Limit Violation Popup */}
-        <View style={styles.speedPopup}>
-          <View style={styles.speedIconContainer}>
-            <View style={styles.speedIcon}>
-              <Text style={styles.lightningIcon}>⚡</Text>
+    <TouchableWithoutFeedback onPress={() => {
+      if (bottomSheetVisible) {
+        hideBottomSheet();
+      }
+    }}>
+      <View style={styles.container}>
+        {/* Map Section */}
+        <View style={styles.mapContainer}>
+          <Image 
+            source={{ uri: mapImage }} 
+            style={styles.mapImage} 
+            resizeMode="cover"
+          />
+          
+          {/* Speed Limit Violation Popup */}
+          <View style={styles.speedPopup}>
+            <View style={styles.speedIconContainer}>
+              <View style={styles.speedIcon}>
+                <Text style={styles.lightningIcon}>🚘</Text>
+              </View>
+            </View>
+            <View style={styles.speedTextContainer}>
+              <Text style={styles.speedTitle}>Speed ({speed || 0} mph)</Text>
+              <Text style={styles.speedTitle}>Acceleration ({acceleration.toFixed(2) || 0} mph)</Text>
+              <Text style={styles.speedLimit}>Speed limit - 30 mph</Text>
             </View>
           </View>
-          <View style={styles.speedTextContainer}>
-            <Text style={styles.speedTitle}>Over speed ({speed || 0} mph)</Text>
-            <Text style={styles.speedLimit}>Speed limit - 30 mph</Text>
-          </View>
-        </View>
-        
-        {/* Route Markers - Start and End Points */}
-        <View style={[styles.locationMarker, styles.topMarker]}>
-          <View style={styles.purpleMarker} />
-        </View>
-        <View style={[styles.locationMarker, styles.bottomMarker]}>
-          <View style={styles.purpleMarker} />
-        </View>
-        
-        {/* Lightning Bolts for Violations */}
-        {[...Array(violations?.length || 0)].map((_, i) => (
-          <View key={i} style={[styles.violationMarker, {
-            top: `${30 + i * 5}%`,
-            left: `${35 + i * 5}%`,
-          }]}>
-            <Text style={styles.violationIcon}>⚡</Text>
-          </View>
-        ))}
-        
-        {/* Button to show trip results */}
-        <TouchableOpacity 
-          style={styles.tripButton} 
-          onPress={showBottomSheet}
-        >
-          <Text style={styles.tripButtonText}>Show Trip Results</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Bottom Sheet for Trip Results */}
-      {bottomSheetVisible && (
-        <Animated.View 
-          style={[
-            styles.scorePanel,
-            {
-              transform: [{ translateY: bottomSheetY }],
-            },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {/* Handle for dragging */}
-          <View style={styles.bottomSheetHandle} />
           
-          <View style={styles.scoreContainer}>
-            <View style={styles.scoreCircle}>
-              <Text style={styles.scoreText}>{score || 0}</Text>
+          {/* Route Markers - Start and End Points */}
+          <View style={[styles.locationMarker, styles.topMarker]}>
+            <View style={styles.purpleMarker} />
+          </View>
+          <View style={[styles.locationMarker, styles.bottomMarker]}>
+            <View style={styles.purpleMarker} />
+          </View>
+          
+          {/* Lightning Bolts for Violations */}
+          {[...Array(violations?.length || 0)].map((_, i) => (
+            <View key={i} style={[styles.violationMarker, {
+              top: `${30 + i * 5}%`,
+              left: `${35 + i * 5}%`,
+            }]}>
+              <Text style={styles.violationIcon}>⚡</Text>
+            </View>
+          ))}
+          
+          {/* Button to show trip results */}
+          <TouchableOpacity 
+            style={styles.tripButton} 
+            onPress={showBottomSheet}
+          >
+            <Text style={styles.tripButtonText}>Show Trip Results</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Bottom Sheet for Trip Results */}
+        {bottomSheetVisible && (
+          <Animated.View 
+            style={[
+              styles.scorePanel,
+              {
+                transform: [{ translateY: bottomSheetY }],
+              },
+            ]}
+            {...panResponder.panHandlers}
+          >
+            {/* Handle for dragging */}
+            <View style={styles.bottomSheetHandle} />
+            
+            <View style={styles.scoreContainer}>
+              <View style={styles.scoreCircle}>
+                <Text style={styles.scoreText}>{score || 0}</Text>
+              </View>
+              
+              <View style={styles.tripInfoContainer}>
+                <Text style={styles.tripTitle}>Nice trip!</Text>
+                <Text style={styles.violationsText}>Total number of road violations - {violations?.length || 0}</Text>
+              </View>
             </View>
             
-            <View style={styles.tripInfoContainer}>
-              <Text style={styles.tripTitle}>Nice trip!</Text>
-              <Text style={styles.violationsText}>Total number of road violations - {violations?.length || 0}</Text>
-            </View>
-          </View>
-          
-          <Text style={styles.feedbackText}>
-            Your progress is great, but don't forget about speed limits. We also recommend you to slow down near crosswalks.
-          </Text>
-          
-          <TouchableOpacity style={styles.detailsButton}>
-            <Text style={styles.detailsButtonText}>See trip details</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-    </View>
+            <Text style={styles.feedbackText}>
+              Your progress is great, but don't forget about speed limits. We also recommend you to slow down near crosswalks.
+            </Text>
+            
+            <TouchableOpacity style={styles.detailsButton}>
+              <Text style={styles.detailsButtonText}>See trip details</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -183,8 +191,13 @@ const styles = StyleSheet.create({
   },
   speedPopup: {
     position: 'absolute',
-    top: '25%',
-    left: '25%',
+    width: '80%',
+    top: 70 + (StatusBar.currentHeight || 0),
+    left: '10%',
+    transform: [
+      { translateX: -'50%' }, // Move half the width to the left
+      { translateY: -'50%' }, // Move half the height upwards
+    ],
     backgroundColor: 'white',
     borderRadius: 12,
     shadowColor: '#000',
@@ -195,7 +208,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 12,
     alignItems: 'center',
-  },
+    justifyContent: 'center',
+  },  
   speedIconContainer: {
     marginRight: 12,
   },
@@ -218,10 +232,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+    textAlign: 'center',
   },
   speedLimit: {
     fontSize: 14,
     color: '#888',
+    textAlign: 'center',
   },
   locationMarker: {
     position: 'absolute',
