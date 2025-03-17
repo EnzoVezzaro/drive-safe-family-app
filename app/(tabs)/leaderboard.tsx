@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, StyleSheet, Image, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,6 +7,19 @@ import { getScores } from '../../lib/supabase'; // Assuming you have this functi
 
 const Leaderboard = () => {
   const [scores, setScores] = useState<any[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    async function fetchScores() {
+      const fetchedScores = await getScores();
+      console.log('fetchedScores: ', fetchedScores);
+      setScores(fetchedScores);
+      setRefreshing(false);
+    }
+
+    fetchScores();
+  }, []);
 
   useEffect(() => {
     async function fetchScores() {
@@ -20,7 +33,12 @@ const Leaderboard = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollContainer}>
+      <ScrollView
+        style={[styles.scrollContainer, { backgroundColor: '#F0F2F5' }]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Gamified Dashboard Header */}
         <View style={styles.dashboardHeader}>
           <Text style={styles.dashboardTitle}>Family Driving Challenge</Text>
@@ -74,7 +92,7 @@ const Leaderboard = () => {
                 />
                 <View style={styles.violationInfo}>
                   <Text style={styles.violationTitle}>Speeding</Text>
-                  <Text style={styles.violationDescription}>30 mph in a 25 mph zone</Text>
+                  <Text style={styles.violationDescription}>30 kmh in a 25 kmh zone</Text>
                 </View>
               </View>
               <View style={styles.violationDetails}>

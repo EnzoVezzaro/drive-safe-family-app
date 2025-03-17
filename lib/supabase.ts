@@ -43,12 +43,11 @@ export async function getUserRank(userId: string): Promise<number | null> {
   return data?.rank || null;
 }
 
-export async function getDrivingStats(userId: string): Promise<{ totalTrips: number; mileage: number; timeDriven: number } | null> {
+export async function getDrivingStats(userId: string): Promise<{ totalTrips: number; mileage: number; timeDriven: number; speed: number; violations: number; score: number } | null> {
   const { data, error } = await supabase
-    .from('driving_stats')
-    .select('total_trips, mileage, time_driven')
-    .eq('user_id', userId)
-    .single();
+    .from('violations')
+    .select('*')
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error fetching driving stats:', error);
@@ -56,9 +55,12 @@ export async function getDrivingStats(userId: string): Promise<{ totalTrips: num
   }
 
   return {
-    totalTrips: data?.total_trips || 0,
-    mileage: data?.mileage || 0,
-    timeDriven: data?.time_driven || 0,
+    totalTrips: 0,
+    mileage: 0,
+    timeDriven: 0,
+    speed: 0,
+    violations: data ? data.length : 0,
+    score: 0,
   };
 }
 

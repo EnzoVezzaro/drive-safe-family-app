@@ -1,14 +1,28 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { Text } from 'react-native-paper';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '../../store';
+import { fetchDrivingData } from '../../store/drivingSlice';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { RootParamList } from '../../types';
 
 const Drive = () => {
-  const speed = useSelector((state: RootState) => state.driving.speed ?? 38);
-  const violations = useSelector((state: RootState) => state.driving.violations ?? 4);
-  const score = useSelector((state: RootState) => state.driving.score ?? 7.8);
+  const dispatch: AppDispatch = useDispatch();
+  const navigation = useNavigation<NavigationProp<RootParamList, 'Profile'>>();
+  const userId = useSelector((state: RootState) => state.auth.userId);
+  const speed = useSelector((state: RootState) => state.driving.speed);
+  const violations = useSelector((state: RootState) => state.driving.violations);
+  const score = useSelector((state: RootState) => state.driving.drivingScore);
+
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchDrivingData(userId));
+    } else {
+      // If userId is not available, navigate to the profile screen
+      navigation.navigate('Profile');
+    }
+  }, [dispatch, userId, navigation]);
 
   // Bottom sheet animation
   const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
@@ -67,7 +81,7 @@ const Drive = () => {
   const mapImage = "https://i.imgur.com/FjGEME0.png"; // Placeholder - use your map image
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Map Section */}
       <View style={styles.mapContainer}>
         <Image 
@@ -84,7 +98,7 @@ const Drive = () => {
             </View>
           </View>
           <View style={styles.speedTextContainer}>
-            <Text style={styles.speedTitle}>Over speed (38 mph)</Text>
+            <Text style={styles.speedTitle}>Over speed ({speed || 0} mph)</Text>
             <Text style={styles.speedLimit}>Speed limit - 30 mph</Text>
           </View>
         </View>
@@ -98,18 +112,14 @@ const Drive = () => {
         </View>
         
         {/* Lightning Bolts for Violations */}
-        <View style={[styles.violationMarker, styles.violation1]}>
-          <Text style={styles.violationIcon}>⚡</Text>
-        </View>
-        <View style={[styles.violationMarker, styles.violation2]}>
-          <Text style={styles.violationIcon}>⚡</Text>
-        </View>
-        <View style={[styles.violationMarker, styles.violation3]}>
-          <Text style={styles.violationIcon}>⚡</Text>
-        </View>
-        <View style={[styles.violationMarker, styles.violation4]}>
-          <Text style={styles.violationIcon}>⚡</Text>
-        </View>
+        {[...Array(violations?.length || 0)].map((_, i) => (
+          <View key={i} style={[styles.violationMarker, {
+            top: `${30 + i * 5}%`,
+            left: `${35 + i * 5}%`,
+          }]}>
+            <Text style={styles.violationIcon}>⚡</Text>
+          </View>
+        ))}
         
         {/* Button to show trip results */}
         <TouchableOpacity 
@@ -136,12 +146,12 @@ const Drive = () => {
           
           <View style={styles.scoreContainer}>
             <View style={styles.scoreCircle}>
-              <Text style={styles.scoreText}>7,8</Text>
+              <Text style={styles.scoreText}>{score || 0}</Text>
             </View>
             
             <View style={styles.tripInfoContainer}>
               <Text style={styles.tripTitle}>Nice trip!</Text>
-              <Text style={styles.violationsText}>Total number of road violations - 4</Text>
+              <Text style={styles.violationsText}>Total number of road violations - {violations?.length || 0}</Text>
             </View>
           </View>
           
@@ -154,7 +164,7 @@ const Drive = () => {
           </TouchableOpacity>
         </Animated.View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -242,22 +252,6 @@ const styles = StyleSheet.create({
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  violation1: {
-    top: '30%',
-    left: '35%',
-  },
-  violation2: {
-    top: '50%',
-    left: '40%',
-  },
-  violation3: {
-    bottom: '35%',
-    right: '30%',
-  },
-  violation4: {
-    bottom: '25%',
-    left: '40%',
   },
   violationIcon: {
     color: '#3454e5',

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { supabase } from '../lib/supabase';
+import { supabase, getDrivingStats } from '../lib/supabase';
 
 interface DrivingState {
   speed: number;
@@ -8,7 +8,7 @@ interface DrivingState {
     latitude: number | null;
     longitude: number | null;
   };
-  violations: string[];
+  violations: any[];
   drivingScore: number;
 }
 
@@ -63,11 +63,11 @@ const drivingSlice = createSlice({
     updateLocation: (state, action: PayloadAction<{ latitude: number; longitude: number }>) => {
       state.location = action.payload;
     },
-    addViolation: (state, action: PayloadAction<string>) => {
-      state.violations.push(action.payload);
-    },
     updateDrivingScore: (state, action: PayloadAction<number>) => {
       state.drivingScore = action.payload;
+    },
+    updateViolations: (state, action: PayloadAction<any[]>) => {
+      state.violations = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -80,12 +80,27 @@ const drivingSlice = createSlice({
   },
 });
 
+export const fetchDrivingData = createAsyncThunk(
+  'driving/fetchDrivingData',
+  async (userId: string, { dispatch }) => {
+    const drivingData = await getDrivingStats(userId);
+
+    if (drivingData) {
+      dispatch(updateViolations(drivingData.violations));
+      return drivingData;
+    } else {
+      console.error('Failed to fetch driving data');
+      throw new Error('Failed to fetch driving data');
+    }
+  }
+);
+
 export const {
   updateSpeed,
   updateAcceleration,
   updateLocation,
-  addViolation,
   updateDrivingScore,
+  updateViolations,
 } = drivingSlice.actions;
 
 export default drivingSlice.reducer;

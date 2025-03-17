@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateAcceleration, updateLocation, updateSpeed, addViolation, addViolationToSupabase } from '../store/drivingSlice';
+import { updateAcceleration, updateLocation, updateSpeed, updateViolations, addViolationToSupabase } from '../store/drivingSlice';
 import { getSpeedLimit, getSpeedLimitMapbox, isLocationInGeofence, sendDriverData } from '../api/trafficApi';
 import { sendNotification } from '../api/notificationApi';
 import { RootState, AppDispatch } from '../store';
@@ -21,8 +21,8 @@ const SensorDataCollector = () => {
   const [speed, setSpeed] = useState(0);
   const [acceleration, setAcceleration] = useState(0);
   const dispatch: AppDispatch = useDispatch();
-  // const userId = useSelector((state: RootState) => state.auth.userId);
-  const userId = 'deb3221a-ac1b-46a6-83e2-c3509095ab3a';
+  const userId = useSelector((state: RootState) => state.auth.userId);
+  // const userId = 'deb3221a-ac1b-46a6-83e2-c3509095ab3a';
 
   // Define a geofence for a school zone
   const schoolZone = {
@@ -49,7 +49,7 @@ const SensorDataCollector = () => {
             });
             console.log('location: ', loc);
 
-            setSpeed(loc.coords.speed || 0);
+            setSpeed(loc.coords.speed ? loc.coords.speed * 3.6 : 0);
             dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
             dispatch(updateSpeed(loc.coords.speed || 0));
 
@@ -59,7 +59,7 @@ const SensorDataCollector = () => {
 
             if (loc.coords.speed !== null && loc.coords.speed > speedLimit) {
               const violationCode = 'SPEEDING';
-              dispatch(addViolation(violationCode));
+              // dispatch(addViolation(violationCode));
               if (userId) {
                 console.log('Dispatching addViolationToSupabase with userId:', userId, 'and violationCode:', violationCode);
                 dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
@@ -69,7 +69,7 @@ const SensorDataCollector = () => {
             // Check if location is in geofence
             if (isLocationInGeofence(loc.coords.latitude, loc.coords.longitude, schoolZone)) {
               const violationCode = 'GEOFENCE_VIOLATION';
-              dispatch(addViolation(violationCode));
+              // dispatch(addViolation(violationCode));
               if (userId) {
                 console.log('Dispatching addViolationToSupabase with userId:', userId, 'and violationCode:', violationCode);
                 dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));

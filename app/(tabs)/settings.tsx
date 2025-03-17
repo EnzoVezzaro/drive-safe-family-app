@@ -1,12 +1,13 @@
 // app/settings.tsx
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Text, Switch } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Settings = () => {
   const [notificationEnabled, setNotificationEnabled] = useState(false);
   const [locationTrackingEnabled, setLocationTrackingEnabled] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleNotificationToggle = () => {
     setNotificationEnabled(!notificationEnabled);
@@ -16,9 +17,22 @@ const Settings = () => {
     setLocationTrackingEnabled(!locationTrackingEnabled);
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Simulate fetching data
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { backgroundColor: '#F0F2F5' }]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <Text variant="headlineMedium">Settings</Text>
 
         <View style={styles.settingItem}>
@@ -30,7 +44,7 @@ const Settings = () => {
           <Text variant="bodyLarge">Enable Location Tracking</Text>
           <Switch value={locationTrackingEnabled} onValueChange={handleLocationTrackingToggle} />
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Image, ScrollView, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -12,6 +12,15 @@ const screenWidth = Dimensions.get('window').width;
 export default function HomeScreen() {
   const userId = useSelector((state: RootState) => state.auth.userId ?? 'Richard');
   const drivingScore = useSelector((state: RootState) => state.driving.drivingScore || 72);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Simulate fetching data
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
   
   const chartData = {
     labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
@@ -56,7 +65,12 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={[styles.scrollView, { backgroundColor: '#F0F2F5' }]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} style={{backgroundColor: '#F0F2F5'}} />
+        }
+      >
         {/* Profile Section */}
         <View style={styles.headerCard}>
           <View style={styles.profileSection}>

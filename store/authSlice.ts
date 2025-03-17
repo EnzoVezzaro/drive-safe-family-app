@@ -10,7 +10,7 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  userId: null,
+  userId: 'deb3221a-ac1b-46a6-83e2-c3509095ab3a',
   isLoggedIn: false,
   role: null,
   loading: false,

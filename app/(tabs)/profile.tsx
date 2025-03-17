@@ -1,59 +1,123 @@
 // app/profile.tsx
-import React from 'react';
-import { View, Image, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Image, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
+import * as Violations from '../../lib/violations';
+
+interface ViolationPercentage {
+  type: string;
+  percentage: number;
+}
 
 const Profile = () => {
   const userId = useSelector((state: RootState) => state.auth.userId);
   const role = useSelector((state: RootState) => state.auth.role);
+  const [refreshing, setRefreshing] = useState(false);
+  const [violationData, setViolationData] = useState<ViolationPercentage[] | null>(null);
+  const [violations, setViolations] = useState<any[] | null>(null);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchViolationData().then(() => setRefreshing(false));
+  }, []);
+
+  useEffect(() => {
+    fetchViolationData();
+  }, []);
+
+  const fetchViolationData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('violations')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+      } else {
+        setViolations(data);
+        // Group violations by type
+        const groupedViolations = data.reduce((acc, violation) => {
+          const type = violation.type;
+          if (!acc[type]) {
+            acc[type] = [];
+          }
+          acc[type].push(violation);
+          return acc;
+        }, {});
+
+        // Calculate percentages for each violation type
+        const totalViolations: number = data.length;
+        let violationPercentages: ViolationPercentage[] = [];
+        Object.keys(groupedViolations).forEach(type => {
+          const count = groupedViolations[type].length;
+          const percentage: number = (count / totalViolations) * 100;
+          violationPercentages.push({ type, percentage });
+        });
+
+        setViolationData(violationPercentages);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const openMap = (location: string) => {
+    const [latitude, longitude] = location.split(',').map(parseFloat);
+    const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    Linking.openURL(url);
+  };
+
+  // If violationData is null, show a loading screen
+  if (!violationData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>Loading profile...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={[styles.scrollView, { backgroundColor: '#F0F2F5' }]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.contentContainer}>
           {/* Main Title */}
           <Text style={styles.mainTitle}>Traffic violations</Text>
-          
+
           {/* Violations per 100 mile section */}
           <Text style={styles.sectionTitle}>Violations per 100 mile</Text>
-          
-          {/* Parking violation */}
-          <View style={styles.violationItem}>
-            <View style={styles.violationHeader}>
-              <Text style={styles.violationType}>Parking</Text>
-              <Text style={styles.violationCount}>11,9</Text>
+
+          {/* Display violations */}
+          {violationData && violationData.map((violation, index) => (
+            <View key={index} style={styles.violationItem}>
+              <View style={styles.violationHeader}>
+                <Text style={styles.violationType}>{Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels]}</Text>
+                <Text style={styles.violationCount}>{violation.percentage.toFixed(1)}%</Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View
+                  style={[
+                    styles.progressBar,
+                    {
+                      backgroundColor: Violations.ViolationColors(violation.type),
+                      width: `${violation.percentage}%`,
+                    },
+                  ]}
+                />
+              </View>
             </View>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { backgroundColor: '#9C27B0', width: '85%' }]} />
-            </View>
-          </View>
-          
-          {/* Speed limit violation */}
-          <View style={styles.violationItem}>
-            <View style={styles.violationHeader}>
-              <Text style={styles.violationType}>Speed limit</Text>
-              <Text style={styles.violationCount}>15,4</Text>
-            </View>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { backgroundColor: '#2196F3', width: '65%' }]} />
-            </View>
-          </View>
-          
-          {/* Crosswalk violation */}
-          <View style={styles.violationItem}>
-            <View style={styles.violationHeader}>
-              <Text style={styles.violationType}>Crosswalk and road priority</Text>
-              <Text style={styles.violationCount}>8,2</Text>
-            </View>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { backgroundColor: '#4CAF50', width: '40%' }]} />
-            </View>
-          </View>
-          
+          ))}
+
           {/* Traffic violations section */}
           <View style={styles.sectionHeader}>
             <Text style={styles.mainTitle}>Traffic violations</Text>
@@ -61,37 +125,26 @@ const Profile = () => {
               <Text style={styles.seeAllLink}>See all</Text>
             </TouchableOpacity>
           </View>
-          
+
           {/* Image carousel */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-            {/* First violation card */}
-            <View style={styles.violationCard}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }} 
-                style={styles.violationImage} 
-              />
-              <View style={styles.violationCardContent}>
-                <Text style={styles.violationCardTitle}>Speed limit exceeded</Text>
-                <Text style={styles.violationCardDetails}>Speed limit at this point - 30 mph.</Text>
-              </View>
-            </View>
-            
-            {/* Second violation card */}
-            <View style={styles.violationCard}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1542574271-7f3b92e6c821?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }} 
-                style={styles.violationImage} 
-              />
-              <View style={styles.violationCardContent}>
-                <Text style={styles.violationCardTitle}>Parking violation</Text>
-                <Text style={styles.violationCardDetails}>Parking near a crosswalk is prohibited.</Text>
-              </View>
-            </View>
+            {violations && violations.map((violation, index) => (
+              <TouchableOpacity key={index} style={styles.violationCard} onPress={() => openMap(violation.location)}>
+                <Image
+                  source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
+                  style={styles.violationImage}
+                />
+                <View style={styles.violationCardContent}>
+                  <Text style={styles.violationCardTitle}>{Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels]}</Text>
+                  <Text style={styles.violationCardDetails}>{violation.timestamp}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
-          
+
           {/* Personal recommendations */}
           <Text style={styles.mainTitle}>Personal recommendations</Text>
-          
+
           {/* Speed limit recommendation */}
           <View style={styles.recommendationItem}>
             <View style={[styles.recommendationIcon, { backgroundColor: '#3F51B5' }]}>
@@ -101,7 +154,7 @@ const Profile = () => {
               Don't forget to follow speed limits in cities.
             </Text>
           </View>
-          
+
           {/* Crosswalk recommendation */}
           <View style={styles.recommendationItem}>
             <View style={[styles.recommendationIcon, { backgroundColor: '#4DB6AC' }]}>
@@ -111,7 +164,7 @@ const Profile = () => {
               Be careful near crosswalks. Remember to give way.
             </Text>
           </View>
-          
+
           {/* User info kept from original code but hidden */}
           <View style={styles.hiddenUserInfo}>
             <Text>User ID: {userId}</Text>
@@ -229,7 +282,7 @@ const styles = StyleSheet.create({
   },
   hiddenUserInfo: {
     display: 'none', // Hide this but keep the data for Redux state
-  }
+  },
 });
 
 export default Profile;
