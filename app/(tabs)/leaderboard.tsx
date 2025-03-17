@@ -6,8 +6,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getScores } from '../../lib/supabase';
 import { useAppSelector, useAuthSelector } from '../../hooks/useRedux';
 import * as Violations from '../../lib/violations';
+import { useTranslation } from 'react-i18next';
 
 const Leaderboard = () => {
+  const { t } = useTranslation();
   const [scores, setScores] = useState<any[] | null>(null);
   const [violations, setViolations] = useState<any[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -17,7 +19,7 @@ const Leaderboard = () => {
     setRefreshing(true);
     async function fetchScores() {
       if (!userId) {
-        console.error('No user ID found in Redux store');
+        console.error(t('leaderboard.noUserId'));
         setRefreshing(false);
         return;
       }
@@ -32,12 +34,12 @@ const Leaderboard = () => {
     }
 
     fetchScores();
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     async function fetchScores() {
       if (!userId) {
-        console.error('No user ID found in Redux store');
+        console.error(t('leaderboard.noUserId'));
         return;
       }
       const fetchedData = await getScores(userId);
@@ -50,7 +52,7 @@ const Leaderboard = () => {
     }
 
     fetchScores();
-  }, [userId]);
+  }, [userId, t]);
 
   return (
       <ScrollView
@@ -61,13 +63,13 @@ const Leaderboard = () => {
       >
         {/* Gamified Dashboard Header */}
         <View style={styles.dashboardHeader}>
-          <Text style={styles.dashboardTitle}>Family Driving Challenge</Text>
-          <Text style={styles.dashboardSubtitle}>Track your progress!</Text>
+          <Text style={styles.dashboardTitle}>{t('leaderboard.familyChallenge')}</Text>
+          <Text style={styles.dashboardSubtitle}>{t('leaderboard.trackProgress')}</Text>
         </View>
 
         {/* Family Leaderboard */}
         <View style={styles.leaderboardSection}>
-          <Text style={styles.leaderboardTitle}>Family Leaderboard</Text>
+          <Text style={styles.leaderboardTitle}>{t('leaderboard.familyLeaderboard')}</Text>
           {scores && scores.length > 0 ? (
             scores.map((score, index) => (
               <View key={index} style={styles.leaderboardItem}>
@@ -76,17 +78,17 @@ const Leaderboard = () => {
               </View>
             ))
           ) : (
-            <Text style={styles.leaderboardLoading}>Loading leaderboard...</Text>
+            <Text style={styles.leaderboardLoading}>{t('leaderboard.loading')}</Text>
           )}
         </View>
 
           {/* Personal Driving Stats */}
           <View style={styles.statsSection}>
-            <Text style={styles.statsTitle}>Your Family Stats</Text>
+            <Text style={styles.statsTitle}>{t('leaderboard.yourStats')}</Text>
 
           {/* Violations per type */}
           <View style={styles.violationStats}>
-            <Text style={styles.violationStatsTitle}>Total Violations {violations?.length || 0}</Text>
+            <Text style={styles.violationStatsTitle}>{t('leaderboard.totalViolations')} {violations?.length || 0}</Text>
             {violations && violations.length > 0 ? (
               Object.entries(
                 violations.reduce((acc, violation) => {
@@ -101,13 +103,13 @@ const Leaderboard = () => {
                 </View>
               ))
             ) : (
-              <Text style={styles.leaderboardLoading}>No violations found</Text>
+              <Text style={styles.leaderboardLoading}>{t('leaderboard.noViolations')}</Text>
             )}
           </View>
 
           {/* Recent Violations */}
           <View style={styles.recentViolations}>
-            <Text style={styles.recentViolationsTitle}>Recent Violations</Text>
+            <Text style={styles.recentViolationsTitle}>{t('leaderboard.recentViolations')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
               {violations && violations.length > 0 ? (
                 violations.map((violation, index) => (
@@ -123,7 +125,7 @@ const Leaderboard = () => {
                   </View>
                 ))
               ) : (
-                <Text style={styles.leaderboardLoading}>No violations found</Text>
+                <Text style={styles.leaderboardLoading}>{t('leaderboard.noViolations')}</Text>
               )}
             </ScrollView>
           </View>

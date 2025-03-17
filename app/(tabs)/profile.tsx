@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import * as Violations from '../../lib/violations';
+import { useTranslation } from 'react-i18next';
 
 interface ViolationPercentage {
   type: string;
@@ -15,6 +16,7 @@ interface ViolationPercentage {
 }
 
 const Profile = () => {
+  const { t } = useTranslation();
   const userId = useSelector((state: RootState) => state.auth.userId);
   const role = useSelector((state: RootState) => state.auth.role);
   const [refreshing, setRefreshing] = useState(false);
@@ -24,11 +26,11 @@ const Profile = () => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchViolationData().then(() => setRefreshing(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchViolationData();
-  }, []);
+  }, [t]);
 
   const fetchViolationData = async () => {
     try {
@@ -38,7 +40,7 @@ const Profile = () => {
         .eq('user_id', userId);
 
       if (error) {
-        console.error('Error fetching user data:', error);
+        console.error(t('profile.fetchError'), error);
       } else {
         setViolations(data);
         // Group violations by type
@@ -63,7 +65,7 @@ const Profile = () => {
         setViolationData(violationPercentages);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error(t('profile.fetchError'), error);
     }
   };
 
@@ -77,7 +79,7 @@ const Profile = () => {
   if (!violationData) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Loading profile...</Text>
+        <Text>{t('profile.loading')}</Text>
       </SafeAreaView>
     );
   }
@@ -92,10 +94,10 @@ const Profile = () => {
       >
         <View style={styles.contentContainer}>
           {/* Main Title */}
-          <Text style={styles.mainTitle}>Traffic violations</Text>
+          <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
 
           {/* Violations per 100 mile section */}
-          <Text style={styles.sectionTitle}>Total Violations {violations?.length || 0}</Text>
+          <Text style={styles.sectionTitle}>{t('profile.totalViolations')} {violations?.length || 0}</Text>
 
           {/* Display violations */}
           {violationData && violationData.map((violation, index) => (
@@ -120,9 +122,9 @@ const Profile = () => {
 
           {/* Traffic violations section */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.mainTitle}>Traffic violations</Text>
+            <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
             <TouchableOpacity>
-              <Text style={styles.seeAllLink}>See all</Text>
+              <Text style={styles.seeAllLink}>{t('profile.seeAll')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -143,7 +145,7 @@ const Profile = () => {
           </ScrollView>
 
           {/* Personal recommendations */}
-          <Text style={styles.mainTitle}>Personal recommendations</Text>
+          <Text style={styles.mainTitle}>{t('profile.recommendations')}</Text>
 
           {/* Speed limit recommendation */}
           <View style={styles.recommendationItem}>
@@ -151,7 +153,7 @@ const Profile = () => {
               <MaterialCommunityIcons name="speedometer" size={24} color="white" />
             </View>
             <Text style={styles.recommendationText}>
-              Don't forget to follow speed limits in cities.
+              {t('profile.speedLimitRecommendation')}
             </Text>
           </View>
 
@@ -161,7 +163,7 @@ const Profile = () => {
               <MaterialCommunityIcons name="walk" size={24} color="white" />
             </View>
             <Text style={styles.recommendationText}>
-              Be careful near crosswalks. Remember to give way.
+              {t('profile.crosswalkRecommendation')}
             </Text>
           </View>
 

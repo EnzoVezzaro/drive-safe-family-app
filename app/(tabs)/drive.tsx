@@ -7,8 +7,10 @@ import { fetchDrivingData } from '../../store/drivingSlice';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootParamList } from '../../types';
 import { useAppSelector, useDrivingSelector } from '../../hooks/useRedux';
+import { useTranslation } from 'react-i18next';
 
 const Drive = () => {
+  const { t } = useTranslation();
   const dispatch: AppDispatch = useDispatch();
   const navigation = useNavigation<NavigationProp<RootParamList, 'Profile'>>();
   const userId = useSelector((state: RootState) => state.auth.userId);
@@ -109,9 +111,9 @@ const Drive = () => {
               </View>
             </View>
             <View style={styles.speedTextContainer}>
-              <Text style={styles.speedTitle}>Speed ({speedKmh || 0} km/h)</Text>
-              <Text style={styles.speedTitle}>Acceleration ({acceleration.toFixed(2) || 0} m/s)</Text>
-              <Text style={styles.speedLimit}>Speed limit - {speedLimit} km/h</Text>
+              <Text style={styles.speedTitle}>{t('drive.speed')} ({speedKmh || 0} km/h)</Text>
+              <Text style={styles.speedTitle}>{t('drive.acceleration')} ({acceleration.toFixed(2) || 0} m/s)</Text>
+              <Text style={styles.speedLimit}>{t('drive.speedLimit')} - {speedLimit} km/h</Text>
             </View>
           </View>
           
@@ -138,7 +140,7 @@ const Drive = () => {
             style={styles.tripButton} 
             onPress={showBottomSheet}
           >
-            <Text style={styles.tripButtonText}>Show Trip Results</Text>
+            <Text style={styles.tripButtonText}>{t('drive.showResults')}</Text>
           </TouchableOpacity>
         </View>
         
@@ -162,17 +164,17 @@ const Drive = () => {
               </View>
               
               <View style={styles.tripInfoContainer}>
-                <Text style={styles.tripTitle}>Nice trip!</Text>
-                <Text style={styles.violationsText}>Total number of road violations - {violations?.length || 0}</Text>
+                <Text style={styles.tripTitle}>{t('drive.niceTrip')}</Text>
+                <Text style={styles.violationsText}>{t('drive.totalViolations')} - {violations?.length || 0}</Text>
               </View>
             </View>
             
             <Text style={styles.feedbackText}>
-              Your progress is great, but don't forget about speed limits. We also recommend you to slow down near crosswalks.
+              {t('drive.feedback')}
             </Text>
             
             <TouchableOpacity style={styles.detailsButton}>
-              <Text style={styles.detailsButtonText}>See trip details</Text>
+              <Text style={styles.detailsButtonText}>{t('drive.tripDetails')}</Text>
             </TouchableOpacity>
           </Animated.View>
         )}

@@ -37,7 +37,7 @@ const SensorDataCollector = () => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.log(t('Permission to access location was denied'));
+        console.log(t('sensorDataCollector.permissionDenied'));
         return;
       }
 
@@ -49,7 +49,7 @@ const SensorDataCollector = () => {
               latitude: loc.coords.latitude,
               longitude: loc.coords.longitude,
             });
-            console.log('location: ', loc);
+            console.log(t('sensorDataCollector.location'), loc);
 
             setSpeed(loc.coords.speed ? loc.coords.speed * 3.6 : 0);
             dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
@@ -64,7 +64,7 @@ const SensorDataCollector = () => {
               const violationCode = 'SPEEDING';
               // dispatch(addViolation(violationCode));
               if (userId) {
-                console.log('Dispatching addViolationToSupabase with userId:', userId, 'and violationCode:', violationCode);
+                console.log(t('sensorDataCollector.dispatchingViolation'), userId, violationCode);
                 dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
               }
             }
@@ -74,7 +74,7 @@ const SensorDataCollector = () => {
               const violationCode = 'GEOFENCE_VIOLATION';
               // dispatch(addViolation(violationCode));
               if (userId) {
-                console.log('Dispatching addViolationToSupabase with userId:', userId, 'and violationCode:', violationCode);
+                console.log(t('sensorDataCollector.dispatchingViolation'), userId, violationCode);
                 dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
               }
             }

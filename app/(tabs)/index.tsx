@@ -6,10 +6,12 @@ import { RootState } from '../../store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const userId = useSelector((state: RootState) => state.auth.userId ?? 'Richard');
   const drivingScore = useSelector((state: RootState) => state.driving.drivingScore || 72);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,40 +86,52 @@ export default function HomeScreen() {
               </View>
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>Hi, Richard</Text>
-              <Text style={styles.userSubtext}>Glad to see you again!</Text>
+              <Text style={styles.userName}>
+                {t('home.hi')}
+                {userId}
+              </Text>
+              <Text style={styles.userSubtext}>{t('home.glad')}</Text>
             </View>
           </View>
         </View>
 
         {/* Start a new route */}
         <TouchableOpacity style={styles.startRouteButton}>
-          <Text style={styles.startRouteText}>Start a new route</Text>
+          <Text style={styles.startRouteText}>{t('home.startRoute')}</Text>
         </TouchableOpacity>
 
         {/* Driving Skill Score */}
         <View style={styles.skillCard}>
-          <Text style={styles.sectionTitle}>Average driving skill</Text>
+          <Text style={styles.sectionTitle}>{t('home.averageSkill')}</Text>
           
           <View style={styles.circularProgressContainer}>
             <View style={styles.circularProgress}>
               <View style={styles.progressBackgroundCircle} />
               <View style={styles.progressIndicator} />
               <Text style={styles.progressPercentage}>72%</Text>
-              <Text style={styles.progressLabel}>current level</Text>
+              <Text style={styles.progressLabel}>{t('home.currentLevel')}</Text>
             </View>
           </View>
           
           {/* Driving Stats */}
           <View style={styles.drivingStatsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Reaction <Text style={styles.statValuePurple}>92%</Text></Text>
+              <Text style={styles.statLabel}>
+                {t('home.reaction')}
+                <Text style={styles.statValuePurple}>92%</Text>
+              </Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Smoothness <Text style={styles.statValueBlue}>74%</Text></Text>
+              <Text style={styles.statLabel}>
+                {t('home.smoothness')}
+                <Text style={styles.statValueBlue}>74%</Text>
+              </Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Wariness <Text style={styles.statValueCyan}>56%</Text></Text>
+              <Text style={styles.statLabel}>
+                {t('home.wariness')}
+                <Text style={styles.statValueCyan}>56%</Text>
+              </Text>
             </View>
           </View>
         </View>
@@ -125,8 +139,8 @@ export default function HomeScreen() {
         {/* Progress Chart */}
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Progress</Text>
-            <Text style={styles.seeDetailsText}>See details</Text>
+            <Text style={styles.progressTitle}>{t('home.progress')}</Text>
+            <Text style={styles.seeDetailsText}>{t('home.seeDetails')}</Text>
           </View>
           
           <View style={styles.chartContainer}>

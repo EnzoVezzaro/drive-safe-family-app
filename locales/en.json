@@ -1,4 +1,72 @@
 {
   "greeting": "Hello!",
-  "welcome": "Welcome to the app!"
+  "welcome": "Welcome to the app!",
+  "sensorDataCollector": {
+    "permissionDenied": "Permission to access location was denied",
+    "location": "Location: ",
+    "dispatchingViolation": "Dispatching addViolationToSupabase with userId: {userId} and violationCode: {violationCode}"
+  },
+  "settings": {
+    "title": "Settings",
+    "enableNotifications": "Enable Notifications",
+    "enableLocationTracking": "Enable Location Tracking",
+    "changeLanguage": "Change Language",
+    "english": "English",
+    "spanish": "Spanish"
+  },
+  "tabs": {
+    "home": "Home",
+    "drive": "Drive",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "notFound": {
+    "oops": "Oops!",
+    "text": "This screen doesn't exist.",
+    "link": "Go to home screen!"
+  },
+  "home": {
+    "hi": "Hi, ",
+    "glad": "Glad to see you again!",
+    "startRoute": "Start a new route",
+    "averageSkill": "Average driving skill",
+    "currentLevel": "current level",
+    "reaction": "Reaction ",
+    "smoothness": "Smoothness ",
+    "wariness": "Wariness ",
+    "progress": "Progress",
+    "seeDetails": "See details"
+  },
+  "drive": {
+    "speed": "Speed",
+    "acceleration": "Acceleration",
+    "speedLimit": "Speed limit",
+    "showResults": "Show Trip Results",
+    "niceTrip": "Nice trip!",
+    "totalViolations": "Total number of road violations",
+    "feedback": "Your progress is great, but don't forget about speed limits. We also recommend you to slow down near crosswalks.",
+    "tripDetails": "See trip details"
+  },
+  "leaderboard": {
+    "noUserId": "No user ID found in Redux store",
+    "familyChallenge": "Family Driving Challenge",
+    "trackProgress": "Track your progress!",
+    "familyLeaderboard": "Family Leaderboard",
+    "loading": "Loading leaderboard...",
+    "yourStats": "Your Family Stats",
+    "totalViolations": "Total Violations",
+    "noViolations": "No violations found",
+    "recentViolations": "Recent Violations"
+  },
+  "profile": {
+    "fetchError": "Error fetching user data:",
+    "loading": "Loading profile...",
+    "trafficViolations": "Traffic violations",
+    "totalViolations": "Total Violations",
+    "seeAll": "See all",
+    "recommendations": "Personal recommendations",
+    "speedLimitRecommendation": "Don't forget to follow speed limits in cities.",
+    "crosswalkRecommendation": "Be careful near crosswalks. Remember to give way."
+  }
 }

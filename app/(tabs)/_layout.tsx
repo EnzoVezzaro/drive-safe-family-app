@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
 import { Car, Home, Medal, Settings, User } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   return (
     <Tabs
       screenOptions={{
@@ -11,35 +13,35 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="drive"
         options={{
-          title: 'Drive',
+          title: t('tabs.drive'),
           tabBarIcon: ({ color, size }) => <Car size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: 'Leaderboard',
+          title: t('tabs.leaderboard'),
           tabBarIcon: ({ color, size }) => <Medal size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
