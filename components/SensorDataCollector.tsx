@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateAcceleration, updateLocation, updateSpeed, updateViolations, addViolationToSupabase } from '../store/drivingSlice';
-import { getSpeedLimit, getSpeedLimitMapbox, isLocationInGeofence, sendDriverData } from '../api/trafficApi';
+import { updateAcceleration, updateLocation, updateSpeed, updateViolations, addViolationToSupabase, updateSpeedLimit } from '../store/drivingSlice';
+import { getSpeedLimitMapbox, isLocationInGeofence, sendDriverData } from '../api/trafficApi';
 import { sendNotification } from '../api/notificationApi';
 import { RootState, AppDispatch } from '../store';
 
@@ -54,10 +54,11 @@ const SensorDataCollector = () => {
             dispatch(updateSpeed(loc.coords.speed || 0));
 
             // Check for speed limit violation
-            const speedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
-            console.log('spped limit: ', loc.coords.speed, speedLimit);
+            const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
+            // console.log('spped limit: ', loc.coords.speed, currentSpeedLimit);
+            dispatch(updateSpeedLimit(currentSpeedLimit));
 
-            if (loc.coords.speed !== null && loc.coords.speed > speedLimit) {
+            if (loc.coords.speed !== null && loc.coords.speed > currentSpeedLimit) {
               const violationCode = 'SPEEDING';
               // dispatch(addViolation(violationCode));
               if (userId) {

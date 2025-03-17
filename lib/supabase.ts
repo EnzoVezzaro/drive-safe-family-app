@@ -43,7 +43,7 @@ export async function getUserRank(userId: string): Promise<number | null> {
   return data?.rank || null;
 }
 
-export async function getDrivingStats(userId: string): Promise<{ totalTrips: number; mileage: number; timeDriven: number; speed: number; violations: number; score: number } | null> {
+export async function getDrivingStats(userId: string): Promise<{ totalTrips: number; mileage: number; timeDriven: number; speed: number; violations: any[]; score: number } | null> {
   const { data, error } = await supabase
     .from('violations')
     .select('*')
@@ -59,7 +59,7 @@ export async function getDrivingStats(userId: string): Promise<{ totalTrips: num
     mileage: 0,
     timeDriven: 0,
     speed: 0,
-    violations: data ? data.length : 0,
+    violations: data || [],
     score: 0,
   };
 }

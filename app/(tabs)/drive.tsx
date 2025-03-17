@@ -6,6 +6,7 @@ import { RootState, AppDispatch } from '../../store';
 import { fetchDrivingData } from '../../store/drivingSlice';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootParamList } from '../../types';
+import { useAppSelector, useDrivingSelector } from '../../hooks/useRedux';
 
 const Drive = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -15,6 +16,7 @@ const Drive = () => {
   const acceleration = useSelector((state: RootState) => state.driving.acceleration);
   const violations = useSelector((state: RootState) => state.driving.violations);
   const score = useSelector((state: RootState) => state.driving.drivingScore);
+  const { speedLimit } = useAppSelector(state => state.driving);
 
   useEffect(() => {
     if (userId) {
@@ -81,6 +83,9 @@ const Drive = () => {
   // Sample map image - replace with actual map implementation
   const mapImage = "https://i.imgur.com/FjGEME0.png"; // Placeholder - use your map image
 
+  // Convert speed to km/h
+  const speedKmh = (speed * 1.60934).toFixed(0);
+
   return (
     <TouchableWithoutFeedback onPress={() => {
       if (bottomSheetVisible) {
@@ -104,9 +109,9 @@ const Drive = () => {
               </View>
             </View>
             <View style={styles.speedTextContainer}>
-              <Text style={styles.speedTitle}>Speed ({speed || 0} mph)</Text>
-              <Text style={styles.speedTitle}>Acceleration ({acceleration.toFixed(2) || 0} mph)</Text>
-              <Text style={styles.speedLimit}>Speed limit - 30 mph</Text>
+              <Text style={styles.speedTitle}>Speed ({speedKmh || 0} km/h)</Text>
+              <Text style={styles.speedTitle}>Acceleration ({acceleration.toFixed(2) || 0} m/s)</Text>
+              <Text style={styles.speedLimit}>Speed limit - {speedLimit} km/h</Text>
             </View>
           </View>
           

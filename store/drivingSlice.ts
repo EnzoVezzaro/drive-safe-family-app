@@ -10,6 +10,7 @@ interface DrivingState {
   };
   violations: any[];
   drivingScore: number;
+  speedLimit: number;
 }
 
 const initialState: DrivingState = {
@@ -21,6 +22,7 @@ const initialState: DrivingState = {
   },
   violations: [],
   drivingScore: 100,
+  speedLimit: 30,
 };
 
 export const addViolationToSupabase = createAsyncThunk(
@@ -69,6 +71,9 @@ const drivingSlice = createSlice({
     updateViolations: (state, action: PayloadAction<any[]>) => {
       state.violations = action.payload;
     },
+    updateSpeedLimit: (state, action: PayloadAction<number>) => {
+      state.speedLimit = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(addViolationToSupabase.fulfilled, (state, action) => {
@@ -86,7 +91,7 @@ export const fetchDrivingData = createAsyncThunk(
     const drivingData = await getDrivingStats(userId);
 
     if (drivingData) {
-      dispatch(updateViolations(drivingData.violations));
+      dispatch(updateViolations(drivingData.violations || []));
       return drivingData;
     } else {
       console.error('Failed to fetch driving data');
@@ -101,6 +106,7 @@ export const {
   updateLocation,
   updateDrivingScore,
   updateViolations,
+  updateSpeedLimit,
 } = drivingSlice.actions;
 
 export default drivingSlice.reducer;
