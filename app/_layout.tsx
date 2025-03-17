@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 import { store } from '../store';
 import SensorDataCollector from '../components/SensorDataCollector';
 import { ScrollView, RefreshControl } from 'react-native';
+import i18n from '../i18n';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -23,11 +24,11 @@ export default function RootLayout() {
     <Provider store={store}>
       <SensorDataCollector />
       <>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </>
     </Provider>
   );
 }

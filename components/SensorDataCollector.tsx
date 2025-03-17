@@ -6,6 +6,7 @@ import { updateAcceleration, updateLocation, updateSpeed, updateViolations, addV
 import { getSpeedLimitMapbox, isLocationInGeofence, sendDriverData } from '../api/trafficApi';
 import { sendNotification } from '../api/notificationApi';
 import { RootState, AppDispatch } from '../store';
+import { useTranslation } from 'react-i18next';
 
 interface LocationObject {
   latitude: number | null;
@@ -13,6 +14,7 @@ interface LocationObject {
 }
 
 const SensorDataCollector = () => {
+  const { t } = useTranslation();
   console.log('SensorDataCollector is running');
   const [location, setLocation] = useState<LocationObject>({
     latitude: null,
@@ -35,7 +37,7 @@ const SensorDataCollector = () => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.log('Permission to access location was denied');
+        console.log(t('Permission to access location was denied'));
         return;
       }
 
