@@ -95,7 +95,7 @@ const Profile = () => {
           <Text style={styles.mainTitle}>Traffic violations</Text>
 
           {/* Violations per 100 mile section */}
-          <Text style={styles.sectionTitle}>Violations per 100 mile</Text>
+          <Text style={styles.sectionTitle}>Total Violations {violations?.length || 0}</Text>
 
           {/* Display violations */}
           {violationData && violationData.map((violation, index) => (

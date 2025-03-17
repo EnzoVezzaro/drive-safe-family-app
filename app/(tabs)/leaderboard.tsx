@@ -53,7 +53,6 @@ const Leaderboard = () => {
   }, [userId]);
 
   return (
-    <SafeAreaView style={styles.container}>
       <ScrollView
         style={[styles.scrollContainer, { backgroundColor: '#F0F2F5' }]}
         refreshControl={
@@ -63,7 +62,7 @@ const Leaderboard = () => {
         {/* Gamified Dashboard Header */}
         <View style={styles.dashboardHeader}>
           <Text style={styles.dashboardTitle}>Family Driving Challenge</Text>
-          <Text style={styles.dashboardSubtitle}>Track your progress & compete!</Text>
+          <Text style={styles.dashboardSubtitle}>Track your progress!</Text>
         </View>
 
         {/* Family Leaderboard */}
@@ -87,17 +86,17 @@ const Leaderboard = () => {
 
           {/* Violations per type */}
           <View style={styles.violationStats}>
-            <Text style={styles.violationStatsTitle}>Total Violations {violations && violations.length || 0}</Text>
+            <Text style={styles.violationStatsTitle}>Total Violations {violations?.length || 0}</Text>
             {violations && violations.length > 0 ? (
               Object.entries(
                 violations.reduce((acc, violation) => {
-                  const type = Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels] || 'Unknown'; // Assuming each violation has a 'type' property
+                  const type = violation.type || 'Unknown'; // Assuming each violation has a 'type' property
                   acc[type] = (acc[type] || 0) + 1;
                   return acc;
                 }, {})
               ).map(([type, count]) => (
                 <View key={type} style={styles.violationItem}>
-                  <Text style={styles.violationText}>{type}</Text>
+                  <Text style={styles.violationText}>{Violations.ViolationLabels[type as keyof typeof Violations.ViolationLabels]}</Text>
                   <Text style={styles.violationValue}>{String(count)}</Text>
                 </View>
               ))
@@ -110,31 +109,26 @@ const Leaderboard = () => {
           <View style={styles.recentViolations}>
             <Text style={styles.recentViolationsTitle}>Recent Violations</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-              <View style={styles.violationDetails}>
-                <Image
-                  source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
-                  style={styles.violationImage}
-                />
-                <View style={styles.violationInfo}>
-                  <Text style={styles.violationTitle}>Speeding</Text>
-                  <Text style={styles.violationDescription}>30 kmh in a 25 kmh zone</Text>
-                </View>
-              </View>
-              <View style={styles.violationDetails}>
-                <Image
-                  source={{ uri: 'https://images.unsplash.com/photo-1542574271-7f3b92e6c821?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
-                  style={styles.violationImage}
-                />
-                <View style={styles.violationInfo}>
-                  <Text style={styles.violationTitle}>Parking</Text>
-                  <Text style={styles.violationDescription}>Near a crosswalk</Text>
-                </View>
-              </View>
+              {violations && violations.length > 0 ? (
+                violations.map((violation, index) => (
+                  <View key={index} style={styles.violationDetails}>
+                    <Image
+                      source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
+                      style={styles.violationImage}
+                    />
+                    <View style={styles.violationInfo}>
+                      <Text style={styles.violationTitle}>{Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels]}</Text>
+                      <Text style={styles.violationDescription}>{violation.timestamp}</Text>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.leaderboardLoading}>No violations found</Text>
+              )}
             </ScrollView>
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
   );
 };
 
@@ -146,9 +140,9 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
     padding: 16,
+    marginTop: 50,
   },
   dashboardHeader: {
-    marginBottom: 24,
     alignItems: 'center',
   },
   dashboardTitle: {
@@ -157,10 +151,12 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   dashboardSubtitle: {
+    marginTop: 5,
     fontSize: 16,
     color: '#666',
   },
   leaderboardSection: {
+    marginTop: 24,
     marginBottom: 24,
   },
   leaderboardTitle: {
