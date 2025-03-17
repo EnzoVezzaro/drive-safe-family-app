@@ -64,21 +64,60 @@ export async function getDrivingStats(userId: string): Promise<{ totalTrips: num
   };
 }
 
-export async function getScores() {
-  const { data, error } = await supabase
-  .from('scores')
-  .select(`
-    score,
-    updated_at,
-    user_id,
-    users:users(id, email)
-  `)
-  .order('score', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching scores:', error);
+export async function getScores(userId: string) {
+  if (!userId) {
+    console.error('No user ID provided');
     return null;
   }
 
-  return data;
+  // Fetch family members (users where id = current user id or parent = current user id)
+  const { data: familyMembers, error: familyError } = await supabase
+    .from('users')
+    .select('id, email')
+    .or(`id.eq.${userId},parent.eq.${userId}`);
+
+  if (familyError) {
+    console.error('Error fetching family members:', familyError);
+    return null;
+  }
+
+  if (!familyMembers || familyMembers.length === 0) {
+    console.log('No family members found for user:', userId);
+    return []; // Return empty array if no family members found
+  }
+
+  // Fetch violations for all family members
+  const familyMemberIds = familyMembers.map(member => member.id);
+  const { data: violations, error: violationsError } = await supabase
+    .from('violations')
+    .select('*')
+    .in('user_id', familyMemberIds);
+  console.log('fetching violations family: ', violations);
+  
+  if (violationsError) {
+    console.error('Error fetching violations:', violationsError);
+    return null;
+  }
+
+  // Calculate score for each family member (example: score = number of violations)
+  const familyScores = familyMembers.map(member => {
+    const memberViolations = violations ? violations.filter(violation => violation.user_id === member.id) : [];
+    const score = memberViolations.length; // Score is based on number of violations
+    return {
+      score: score,
+      user_id: member.id,
+      users: {
+        id: member.id,
+        email: member.email
+      }
+    };
+  });
+
+  // Sort family scores by score in descending order
+  familyScores.sort((a, b) => b.score - a.score);
+
+  return {
+    scores: familyScores,
+    violations: violations || []
+  };
 }

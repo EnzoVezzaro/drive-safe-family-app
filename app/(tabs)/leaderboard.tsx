@@ -3,33 +3,54 @@ import { View, ScrollView, StyleSheet, Image, TouchableOpacity, RefreshControl }
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { getScores } from '../../lib/supabase'; // Assuming you have this function
+import { getScores } from '../../lib/supabase';
+import { useAppSelector, useAuthSelector } from '../../hooks/useRedux';
+import * as Violations from '../../lib/violations';
 
 const Leaderboard = () => {
   const [scores, setScores] = useState<any[] | null>(null);
+  const [violations, setViolations] = useState<any[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { userId } = useAuthSelector();
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     async function fetchScores() {
-      const fetchedScores = await getScores();
-      console.log('fetchedScores: ', fetchedScores);
-      setScores(fetchedScores);
+      if (!userId) {
+        console.error('No user ID found in Redux store');
+        setRefreshing(false);
+        return;
+      }
+      const fetchedData = await getScores(userId); 
+      console.log('fetchedData: ', fetchedData);
+
+      if (fetchedData && Array.isArray(fetchedData) === false) {
+        setScores(fetchedData.scores);
+        setViolations(fetchedData.violations);
+      }
       setRefreshing(false);
     }
 
     fetchScores();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     async function fetchScores() {
-      const fetchedScores = await getScores();
-      console.log('fetchedScores: ', fetchedScores);
-      setScores(fetchedScores);
+      if (!userId) {
+        console.error('No user ID found in Redux store');
+        return;
+      }
+      const fetchedData = await getScores(userId);
+      console.log('fetchedData: ', fetchedData);
+
+      if (fetchedData && Array.isArray(fetchedData) === false) {
+        setScores(fetchedData.scores);
+        setViolations(fetchedData.violations);
+      }
     }
 
     fetchScores();
-  }, []);
+  }, [userId]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,25 +81,29 @@ const Leaderboard = () => {
           )}
         </View>
 
-        {/* Personal Driving Stats */}
-        <View style={styles.statsSection}>
-          <Text style={styles.statsTitle}>Your Driving Stats</Text>
+          {/* Personal Driving Stats */}
+          <View style={styles.statsSection}>
+            <Text style={styles.statsTitle}>Your Family Stats</Text>
 
-          {/* Violations per 100 mile */}
+          {/* Violations per type */}
           <View style={styles.violationStats}>
-            <Text style={styles.violationStatsTitle}>Violations per 100 mile</Text>
-            <View style={styles.violationItem}>
-              <Text style={styles.violationText}>Parking</Text>
-              <Text style={styles.violationValue}>11.9</Text>
-            </View>
-            <View style={styles.violationItem}>
-              <Text style={styles.violationText}>Speed limit</Text>
-              <Text style={styles.violationValue}>15.4</Text>
-            </View>
-            <View style={styles.violationItem}>
-              <Text style={styles.violationText}>Crosswalk</Text>
-              <Text style={styles.violationValue}>8.2</Text>
-            </View>
+            <Text style={styles.violationStatsTitle}>Total Violations {violations && violations.length || 0}</Text>
+            {violations && violations.length > 0 ? (
+              Object.entries(
+                violations.reduce((acc, violation) => {
+                  const type = Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels] || 'Unknown'; // Assuming each violation has a 'type' property
+                  acc[type] = (acc[type] || 0) + 1;
+                  return acc;
+                }, {})
+              ).map(([type, count]) => (
+                <View key={type} style={styles.violationItem}>
+                  <Text style={styles.violationText}>{type}</Text>
+                  <Text style={styles.violationValue}>{String(count)}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.leaderboardLoading}>No violations found</Text>
+            )}
           </View>
 
           {/* Recent Violations */}
