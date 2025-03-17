@@ -41,6 +41,53 @@ export async function getSpeedLimit(latitude: number, longitude: number): Promis
   }
 }
 
+export async function getSpeedLimitMapbox(latitude: number, longitude: number): Promise<number> {
+  const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
+  
+  if (!accessToken) {
+    console.error('Mapbox API key is missing.');
+    return 55; // Default speed limit
+  }
+
+  // Using coordinates dynamically
+  const url = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${longitude},${latitude};${longitude + 0.01},${latitude + 0.01}?geometries=geojson&annotations=maxspeed&steps=true&alternatives=false&overview=full&access_token=${accessToken}`;
+
+  try {
+    console.log('Fetching speed limit data from Mapbox:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.warn('Failed to fetch speed limit from Mapbox.');
+      return 55; // Default speed limit
+    }
+
+    const data = await response.json();
+    
+    if (!data.routes || data.routes.length === 0) {
+      console.warn('No route data found.');
+      return 55;
+    }
+
+    // Extract speed limit (if available)
+    const maxspeedArray = data.routes[0]?.legs[0]?.annotation?.maxspeed ?? [];
+
+    for (const speedData of maxspeedArray) {
+      if (speedData?.speed && speedData.speed !== "unknown") {
+        console.log(`Speed Limit Found: ${speedData.speed} km/h`);
+        return speedData.speed;
+      }
+    }
+
+    console.warn('No valid speed limit found.');
+    return 55; // Default speed limit if none found
+  } catch (error) {
+    console.error('Error fetching speed limit:', error);
+    return 55; // Default speed limit in case of error
+  }
+}
+
+
 export function isLocationInGeofence(latitude: number, longitude: number, geofence: { latitude: number; longitude: number; radius: number }): boolean {
   const toRadians = (degree: number) => degree * (Math.PI / 180);
 

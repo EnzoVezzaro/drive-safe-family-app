@@ -3,7 +3,7 @@ import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateAcceleration, updateLocation, updateSpeed, addViolation, addViolationToSupabase } from '../store/drivingSlice';
-import { getSpeedLimit, isLocationInGeofence, sendDriverData } from '../api/trafficApi';
+import { getSpeedLimit, getSpeedLimitMapbox, isLocationInGeofence, sendDriverData } from '../api/trafficApi';
 import { sendNotification } from '../api/notificationApi';
 import { RootState, AppDispatch } from '../store';
 
@@ -54,7 +54,7 @@ const SensorDataCollector = () => {
             dispatch(updateSpeed(loc.coords.speed || 0));
 
             // Check for speed limit violation
-            const speedLimit = await getSpeedLimit(loc.coords.latitude, loc.coords.longitude);
+            const speedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
             console.log('spped limit: ', loc.coords.speed, speedLimit);
 
             if (loc.coords.speed !== null && loc.coords.speed > speedLimit) {
