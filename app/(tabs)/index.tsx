@@ -7,12 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen() {
+  const navigation = useNavigation<any>();
   const { t } = useTranslation();
-  const userId = useSelector((state: RootState) => state.auth.userId ?? 'Richard');
+  const email = useSelector((state: RootState) => state.auth.email ?? 'test@example.com');
   const drivingScore = useSelector((state: RootState) => state.driving.drivingScore || 72);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -87,8 +89,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>
-                {t('home.hi')}
-                {userId}
+                {t('home.hi')} {email}
               </Text>
               <Text style={styles.userSubtext}>{t('home.glad')}</Text>
             </View>
@@ -96,8 +97,8 @@ export default function HomeScreen() {
         </View>
 
         {/* Start a new route */}
-        <TouchableOpacity style={styles.startRouteButton}>
-          <Text style={styles.startRouteText}>{t('home.startRoute')}</Text>
+        <TouchableOpacity style={styles.startRouteButton} onPress={() => navigation.navigate('leaderboard')}>
+          <Text style={styles.startRouteText}>{t('home.familyDashboard')}</Text>
         </TouchableOpacity>
 
         {/* Driving Skill Score */}
@@ -175,9 +176,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f2f5',
   },
   scrollView: {
-    flex: 1,
+    flex: 0,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingBottom: 16,
   },
   headerCard: {
     backgroundColor: '#343b6e',

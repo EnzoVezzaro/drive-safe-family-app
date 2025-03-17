@@ -14,6 +14,7 @@
     "@expo/vector-icons": "^14.0.0",
     "@heroui/system": "^2.4.12",
     "@heroui/theme": "^2.4.12",
+    "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
     "@reduxjs/toolkit": "^2.0.1",

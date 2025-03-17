@@ -36,17 +36,18 @@
     "smoothness": "Smoothness ",
     "wariness": "Wariness ",
     "progress": "Progress",
-    "seeDetails": "See details"
+    "seeDetails": "See details",
+    "familyDashboard": "See your family's dashboard"
   },
   "drive": {
     "speed": "Speed",
     "acceleration": "Acceleration",
     "speedLimit": "Speed limit",
     "showResults": "Show Trip Results",
-    "niceTrip": "Nice trip!",
+    "niceTrip": "¡Buen viaje!",
     "totalViolations": "Total number of road violations",
     "feedback": "Your progress is great, but don't forget about speed limits. We also recommend you to slow down near crosswalks.",
-    "tripDetails": "See trip details"
+    "tripDetails": "Ver detalles"
   },
   "leaderboard": {
     "noUserId": "No user ID found in Redux store",

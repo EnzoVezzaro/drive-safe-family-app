@@ -3,6 +3,7 @@ import { signUp as supabaseSignUp, signIn as supabaseSignIn } from '../lib/supab
 
 interface AuthState {
   userId: string | null;
+  email: string | null;
   isLoggedIn: boolean;
   role: 'parent' | 'family' | null;
   loading: boolean;
@@ -10,7 +11,8 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  userId: 'deb3221a-ac1b-46a6-83e2-c3509095ab3a',
+  userId: null,
+  email: null,
   isLoggedIn: false,
   role: null,
   loading: false,
@@ -28,7 +30,7 @@ export const signUp = createAsyncThunk(
       if (!data.user) {
         return rejectWithValue('User not found after signup');
       }
-      return { userId: data.user.id, role };
+      return { userId: data.user.id, email: email, role };
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -46,7 +48,7 @@ export const signIn = createAsyncThunk(
       if (!data.user) {
         return rejectWithValue('User not found after signin');
       }
-      return { userId: data.user.id, role: 'family' as 'family'};
+      return { userId: data.user.id, email: email, role: 'family' as 'family'};
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -57,13 +59,15 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setAuth: (state, action: PayloadAction<{ userId: string; role: 'parent' | 'family' }>) => {
+    setAuth: (state, action: PayloadAction<{ userId: string; email: string; role: 'parent' | 'family' }>) => {
       state.userId = action.payload.userId;
+      state.email = action.payload.email;
       state.isLoggedIn = true;
       state.role = action.payload.role;
     },
     clearAuth: (state) => {
       state.userId = null;
+      state.email = null;
       state.isLoggedIn = false;
       state.role = null;
     },
@@ -74,9 +78,10 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(signUp.fulfilled, (state, action: PayloadAction<{ userId: string; role: 'parent' | 'family' }>) => {
+      .addCase(signUp.fulfilled, (state, action: PayloadAction<{ userId: string; email: string; role: 'parent' | 'family' }>) => {
         state.loading = false;
         state.userId = action.payload.userId;
+        state.email = action.payload.email;
         state.isLoggedIn = true;
         state.role = action.payload.role;
       })
@@ -88,9 +93,10 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(signIn.fulfilled, (state, action: PayloadAction<{ userId: string; role: 'family' }>) => {
+      .addCase(signIn.fulfilled, (state, action: PayloadAction<{ userId: string; email: string; role: 'family' }>) => {
         state.loading = false;
         state.userId = action.payload.userId;
+        state.email = action.payload.email;
         state.isLoggedIn = true;
         state.role = action.payload.role;
       })

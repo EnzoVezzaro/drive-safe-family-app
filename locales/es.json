@@ -68,5 +68,49 @@
     "recommendations": "Recomendaciones personales",
     "speedLimitRecommendation": "No olvides seguir los límites de velocidad en las ciudades.",
     "crosswalkRecommendation": "Ten cuidado cerca de los pasos de peatones. Recuerda ceder el paso."
+  },
+  "home": {
+    "hi": "¡Hola, ",
+    "glad": "¡Me alegro de verte de nuevo!",
+    "startRoute": "Comenzar una nueva ruta",
+    "averageSkill": "Habilidad de conducción promedio",
+    "currentLevel": "nivel actual",
+    "reaction": "Reacción ",
+    "smoothness": "Suavidad ",
+    "wariness": "Precaución ",
+    "progress": "Progreso",
+    "seeDetails": "Ver detalles",
+    "familyDashboard": "Mira la dashboard de tu familia"
+  },
+  "drive": {
+    "speed": "Velocidad",
+    "acceleration": "Aceleración",
+    "speedLimit": "Límite de velocidad",
+    "showResults": "Mostrar resultados del viaje",
+    "niceTrip": "¡Buen viaje!",
+    "totalViolations": "Número total de infracciones de tráfico",
+    "feedback": "Tu progreso es excelente, pero no te olvides de los límites de velocidad. También te recomendamos que reduzcas la velocidad cerca de los pasos de peatones.",
+    "tripDetails": "Ver detalles"
+  },
+  "leaderboard": {
+    "noUserId": "No se encontró el ID de usuario en la tienda Redux",
+    "familyChallenge": "Desafío de conducción familiar",
+    "trackProgress": "¡Sigue tu progreso!",
+    "familyLeaderboard": "Tabla de clasificación familiar",
+    "loading": "Cargando la tabla de clasificación...",
+    "yourStats": "Tus estadísticas familiares",
+    "totalViolations": "Infracciones totales",
+    "noViolations": "No se encontraron infracciones",
+    "recentViolations": "Infracciones recientes"
+  },
+  "profile": {
+    "fetchError": "Error al obtener los datos del usuario:",
+    "loading": "Cargando perfil...",
+    "trafficViolations": "Infracciones de tráfico",
+    "totalViolations": "Infracciones totales",
+    "seeAll": "Ver todo",
+    "recommendations": "Recomendaciones personales",
+    "speedLimitRecommendation": "No olvides seguir los límites de velocidad en las ciudades.",
+    "crosswalkRecommendation": "Ten cuidado cerca de los pasos de peatones. Recuerda ceder el paso."
   }
 }
