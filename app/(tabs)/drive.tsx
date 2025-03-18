@@ -93,6 +93,7 @@ const Drive = () => {
     }}>
       <View style={styles.container}>
         <View style={styles.mapContainer}>
+
           <MapboxGL.MapView style={styles.map} styleURL="mapbox://styles/mapbox/streets-v11">
             {location && location.latitude && location.longitude && (
               <>
@@ -104,7 +105,9 @@ const Drive = () => {
             )}
           </MapboxGL.MapView>
 
-          <View style={styles.speedPopup}>
+          <View 
+            style={styles.tripButtonTop} 
+          >
             <View style={styles.speedIconContainer}>
               <View style={styles.speedIcon}>
                 <Text style={styles.lightningIcon}>🚘</Text>
@@ -161,7 +164,7 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     flex: 1,
-    position: 'relative',
+    position: 'relative', 
   },
   userMarker: {
     width: 15,
@@ -173,24 +176,6 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
-  },
-  speedPopup: {
-    position: 'absolute',
-    width: '80%',
-    top: 70 + (StatusBar.currentHeight || 0),
-    left: '10%',
-    transform: [{ translateX: -'50%' }, { translateY: -'50%' }],
-    backgroundColor: 'white',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    flexDirection: 'row',
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   speedIconContainer: {
     marginRight: 12,
@@ -220,6 +205,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
+  },
+  tripButtonTop: {
+    flexDirection: 'row',
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '80%',
+    top: 70,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: 'white',
+    borderRadius: 24,
+    elevation: 5,
   },
   tripButton: {
     position: 'absolute',

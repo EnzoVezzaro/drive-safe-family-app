@@ -1,6 +1,6 @@
 // app/profile.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Image, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking } from 'react-native';
+import { View, Image, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F0F2F5',
+    marginTop: Platform.OS === 'android' ? 20 : 0,
   },
   scrollView: {
     flex: 1,

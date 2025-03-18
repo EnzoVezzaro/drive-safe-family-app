@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Image, ScrollView, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Image, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f2f5',
+    marginTop: Platform.OS === 'android' ? 50 : 0,
     },
     scrollView: {
     flex: 0,

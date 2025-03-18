@@ -1,6 +1,6 @@
 // app/settings.tsx
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Platform } from 'react-native';
 import { Text, Switch } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from 'react-native';
@@ -63,7 +63,7 @@ const Settings = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Text variant="headlineMedium">{t('settings.title')}</Text>
+        <Text style={styles.mainTitle}>{t('settings.title')}</Text>
 
         <View style={styles.settingItem}>
           <Text variant="bodyLarge">{t('settings.enableNotifications')}</Text>
@@ -125,6 +125,7 @@ const Settings = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    marginTop: Platform.OS === 'android' ? 20 : 0,
   },
   container: {
     flex: 1,
@@ -156,6 +157,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  mainTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 8,
   },
   modalView: {
     backgroundColor: "white",
