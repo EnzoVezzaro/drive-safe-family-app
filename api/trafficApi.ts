@@ -41,6 +41,105 @@ export async function getSpeedLimit(latitude: number, longitude: number): Promis
   }
 }
 
+export async function getDriverDataAndViolations(userId: string): Promise<{ drivingScore: number; reaction: number; smoothness: number; wariness: number; chartData: any }> {
+  try {
+    // Fetch driving data
+    const { data: drivingData, error: drivingError } = await supabase
+      .from('driving_data')
+      .select('*')
+      .eq('user_id', userId)
+      .order('timestamp', { ascending: true });
+
+    if (drivingError) {
+      console.error('Error fetching driving data:', drivingError);
+      return { drivingScore: NaN, reaction: NaN, smoothness: NaN, wariness: NaN, chartData: { labels: [], datasets: [] } };
+    }
+
+    // Fetch violation data
+    const { data: violationData, error: violationError } = await supabase
+      .from('violations')
+      .select('*')
+      .eq('user_id', userId)
+      .order('timestamp', { ascending: true });
+
+    if (violationError) {
+      console.error('Error fetching violation data:', violationError);
+      return { drivingScore: NaN, reaction: NaN, smoothness: NaN, wariness: NaN, chartData: { labels: [], datasets: [] } };
+    }
+
+    // Process the data to calculate the stats
+    let totalReaction = 0;
+    let totalSmoothness = 0;
+    let totalWariness = 0;
+    let drivingScoreValue = 100;
+
+    // Penalize driving score based on the number and severity of violations
+    if (violationData && violationData.length > 0) {
+      let violationPenalty = 0;
+      for (const violation of violationData) {
+        violationPenalty += violation.severity || 1; // Default severity to 1 if null
+      }
+      drivingScoreValue -= violationPenalty;
+
+      // Ensure driving score is within the range of 0 to 100
+      drivingScoreValue = Math.max(0, Math.min(100, drivingScoreValue));
+    }
+
+    /*
+    const chartData = {
+      labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+      datasets: [
+        {
+          data: [10, 25, 45, 48, 52, 60],
+          color: (opacity = 1) => `rgba(75, 0, 130, ${opacity})`, // purple
+          strokeWidth: 2
+        },
+        {
+          data: [5, 20, 35, 45, 48, 42],
+          color: (opacity = 1) => `rgba(65, 105, 225, ${opacity})`, // blue
+          strokeWidth: 2
+        },
+        {
+          data: [1, 5, 15, 25, 30, 35],
+          color: (opacity = 1) => `rgba(0, 188, 212, ${opacity})`, // cyan
+          strokeWidth: 2
+        }
+      ]
+    };
+    */
+
+    // Create chart data
+    const chartData = {
+      labels: drivingData.map(data => new Date(data.timestamp).toLocaleDateString()),
+      datasets: [
+        {
+          data: drivingData.map((data, index) => {
+            let total = ((data.reaction ?? 0) + (data.smoothness ?? 0) + (data.wariness ?? 0)) / 3;
+            const violation = violationData.find(v => new Date(v.timestamp).toLocaleDateString() === new Date(data.timestamp).toLocaleDateString());
+            total += violation ? violation.severity ?? 1 : 0;
+            return total;
+          }),
+          color: (opacity = 1) => `rgba(75, 0, 130, ${opacity})`, // purple
+          strokeWidth: 2,
+        },
+      ],
+    };
+
+    console.log('chartData ', chartData);
+
+    return {
+      drivingScore: drivingScoreValue,
+      reaction: totalReaction,
+      smoothness: totalSmoothness,
+      wariness: totalWariness,
+      chartData: chartData,
+    };
+  } catch (error) {
+    console.error('Error fetching driver data and violations:', error);
+    return { drivingScore: NaN, reaction: NaN, smoothness: NaN, wariness: NaN, chartData: { labels: [], datasets: [] } };
+  }
+}
+
 export async function getSpeedLimitMapbox(latitude: number, longitude: number): Promise<number> {
   const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
   
@@ -54,7 +153,6 @@ export async function getSpeedLimitMapbox(latitude: number, longitude: number): 
 
   try {
     console.log('Fetching speed limit data from Mapbox:', url);
-
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -103,7 +201,7 @@ export function isLocationInGeofence(latitude: number, longitude: number, geofen
   const dLon = lon2 - lon1;
 
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1) * Math.cos(lat2) *
+            Math.cos(lat1) * Math.cos(lat2) +
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
