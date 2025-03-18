@@ -109,6 +109,12 @@ packagingOptions {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file('drive-safe-family.keystore')
+            storePassword 'Drive2025j.A'
+            keyAlias 'drive-safe-family'
+            keyPassword 'Drive2025j.A'
+        }
     }
     buildTypes {
         debug {
