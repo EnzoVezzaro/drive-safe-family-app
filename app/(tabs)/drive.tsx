@@ -22,6 +22,7 @@ const Drive = () => {
   const speed = useSelector((state: RootState) => state.driving.speed);
   const acceleration = useSelector((state: RootState) => state.driving.acceleration);
   const violations = useSelector((state: RootState) => state.driving.violations);
+  const location = useSelector((state: RootState) => state.driving.location);
   const score = useSelector((state: RootState) => state.driving.drivingScore);
   const { speedLimit } = useAppSelector(state => state.driving);
 
@@ -79,10 +80,10 @@ const Drive = () => {
     })
   ).current;
 
-  const startCoordinate: [number, number] = [-69.9501, 18.4743];
-  const endCoordinate: [number, number] = [-69.9372, 18.4817];
-
   const speedKmh = (speed * 1.60934).toFixed(0);
+
+  console.log('location: ', location);
+  
 
   return (
     <TouchableWithoutFeedback onPress={() => {
@@ -92,21 +93,15 @@ const Drive = () => {
     }}>
       <View style={styles.container}>
         <View style={styles.mapContainer}>
-          <MapboxGL.MapView style={{ flex: 1 }} styleURL="mapbox://styles/mapbox/streets-v11">
-            <MapboxGL.Camera
-              centerCoordinate={[
-                (startCoordinate[0] + endCoordinate[0]) / 2,
-                (startCoordinate[1] + endCoordinate[1]) / 2,
-              ]}
-              zoomLevel={14}
-              pitch={0}
-            />
-            <MapboxGL.PointAnnotation id="start" coordinate={startCoordinate}>
-              <View style={{ backgroundColor: 'blue', borderRadius: 50, width: 10, height: 10 }} />
-            </MapboxGL.PointAnnotation>
-            <MapboxGL.PointAnnotation id="end" coordinate={endCoordinate}>
-              <View style={{ backgroundColor: 'red', borderRadius: 50, width: 10, height: 10 }} />
-            </MapboxGL.PointAnnotation>
+          <MapboxGL.MapView style={styles.map} styleURL="mapbox://styles/mapbox/streets-v11">
+            {location && location.latitude && location.longitude && (
+              <>
+                <MapboxGL.Camera centerCoordinate={[location.longitude, location.latitude]} zoomLevel={15} animationMode="flyTo" />
+                <MapboxGL.PointAnnotation id="user-location" coordinate={[location.longitude, location.latitude]}>
+                  <View style={styles.userMarker} />
+                </MapboxGL.PointAnnotation>
+              </>
+            )}
           </MapboxGL.MapView>
 
           <View style={styles.speedPopup}>
@@ -167,6 +162,14 @@ const styles = StyleSheet.create({
   mapContainer: {
     flex: 1,
     position: 'relative',
+  },
+  userMarker: {
+    width: 15,
+    height: 15,
+    backgroundColor: 'blue',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'white',
   },
   map: {
     flex: 1,
