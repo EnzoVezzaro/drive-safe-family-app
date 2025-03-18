@@ -1,8 +1,8 @@
 export default {
   expo: {
-    name: process.env.APP_NAME || "bolt-expo-nativewind",
-    slug: "bolt-expo-nativewind",
-    version: "1.0.0",
+    name: process.env.APP_NAME || "drive-safe-family",
+    slug: "drive-safe-family",
+    version: "0.0.1",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "myapp",
@@ -10,7 +10,7 @@ export default {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: process.env.BUNDLE_IDENTIFIER || "com.anonymous.boltexponativewind"
+      bundleIdentifier: process.env.BUNDLE_IDENTIFIER || "com.anonymous.drivesafefamily"
     },
     web: {
       bundler: "metro",
@@ -42,7 +42,7 @@ export default {
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      package: process.env.BUNDLE_IDENTIFIER || "com.anonymous.boltexponativewind"
+      package: process.env.BUNDLE_IDENTIFIER || "com.anonymous.drivesafefamily"
     }
   }
 };
