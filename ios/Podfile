@@ -17,7 +17,7 @@ prepare_react_native_project!
 $RNMapboxMapsDownloadToken = 'sk.eyJ1IjoiZW56by1qdW5vci12ZXp6YXJvIiwiYSI6ImNtOGVsc3o4dTAycTEyc290bzl4ZmNvbW0ifQ.5SNQ2fsGqKTk2nFE26k5fg'
 $RNMapboxMapsVersion = '11.8.0'
 # @generated end @rnmapbox/maps-rnmapboxmapsimpl
-target 'boltexponativewind' do
+target 'drivesafefamily' do
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
