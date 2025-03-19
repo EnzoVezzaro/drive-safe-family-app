@@ -51,9 +51,10 @@ const SensorDataCollector = () => {
             });
             console.log(t('sensorDataCollector.location'), loc);
 
-            setSpeed(loc.coords.speed ? loc.coords.speed * 3.6 : 0);
+            const kmConv =  3.6;
+            setSpeed(loc.coords.speed ? loc.coords.speed * kmConv : 0);
             dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
-            dispatch(updateSpeed(loc.coords.speed || 0));
+            dispatch(updateSpeed(loc.coords.speed ? loc.coords.speed * kmConv : 0));
 
             // Check for speed limit violation
             const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
