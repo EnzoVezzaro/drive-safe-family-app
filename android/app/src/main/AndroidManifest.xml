@@ -30,6 +30,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.anonymous.boltexponativewind"/>
+        <data android:scheme="com.anonymous.drivesafefamily"/>
       </intent-filter>
     </activity>
   </application>

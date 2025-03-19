@@ -1,28 +1,28 @@
-import i18n from 'i18next';
+import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import * as Localization from 'expo-localization';
+import * as RNLocalize from 'react-native-localize';
 
+// Import translations
 import en from './locales/en.json';
 import es from './locales/es.json';
 
-const resources = {
-  en: {
-    translation: en,
-  },
-  es: {
-    translation: es,
-  },
+// Detect language from device settings
+const getDeviceLanguage = () => {
+  const locales = RNLocalize.getLocales();
+  return locales.length > 0 ? locales[0].languageTag : 'en';
 };
 
-i18n
-  .use(initReactI18next) // passes i18n down to react-i18next
+i18next
+  .use(initReactI18next)
   .init({
-    resources,
-    lng: 'es', // Localization.locale, // language to use, more information here: https://www.i18next.com/translation-functionality/setting-a-default-namespace/
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false, // react already safes from xss
+    compatibilityJSON: 'v3',
+    resources: {
+      en: { translation: en },
+      es: { translation: es },
     },
+    lng: getDeviceLanguage(), // Default language from device
+    fallbackLng: 'en', // Fallback language
+    interpolation: { escapeValue: false },
   });
 
-  export default i18n;
+export default i18next;

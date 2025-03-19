@@ -4,7 +4,8 @@ import { store, persistor } from '../store';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Loading from './loading';
+import { I18nextProvider } from 'react-i18next';
+import i18next from '../i18n';
 
 function RootLayoutInner() {
   useFrameworkReady();
@@ -29,7 +30,9 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <RootLayoutInner />
+        <I18nextProvider i18n={i18next}>
+          <RootLayoutInner />
+        </I18nextProvider>
       </PersistGate>
     </Provider>
   );
