@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useAppSelector } from '../../hooks/useRedux';
 import { getDriverDataAndViolations } from '../../api/trafficApi';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -92,13 +93,15 @@ export default function HomeScreen() {
         <View style={styles.headerCard}>
           <View style={styles.profileSection}>
             <View style={styles.avatarContainer}>
-              <Image
-                source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }}
-                style={styles.avatar}
-              />
-              <View style={styles.starBadge}>
+              <View style={styles.avatar}>
+                <MaterialCommunityIcons name="account" size={36} color="white" />
+              </View>
+              {/**
+               * TODO: premium users
+               * <View style={styles.starBadge}>
                 <Text style={styles.starText}>★</Text>
               </View>
+               */}
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>
@@ -227,6 +230,8 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+    justifyContent: 'center',
+    alignContent: 'center'
     },
     starBadge: {
     position: 'absolute',
@@ -248,7 +253,7 @@ const styles = StyleSheet.create({
     },
     userName: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     },
     userSubtext: {

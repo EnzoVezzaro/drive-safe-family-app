@@ -4,7 +4,9 @@
   "sensorDataCollector": {
     "permissionDenied": "Se denegó el permiso para acceder a la ubicación",
     "location": "Ubicación: ",
-    "dispatchingViolation": "Enviando addViolationToSupabase con userId: {userId} y violationCode: {violationCode}"
+    "dispatchingViolation": "Enviando addViolationToSupabase con userId: {userId} y violationCode: {violationCode}",
+    "violationDetected": "¡Violación detectada",
+    "acknowledge": "Aceptar"
   },
   "settings": {
     "title": "Ajustes",

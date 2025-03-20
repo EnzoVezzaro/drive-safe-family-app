@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { point } from '@turf/helpers';
+import Modal from 'react-native-modal';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 
 interface LocationObject {
   latitude: number | null;
@@ -20,7 +22,12 @@ interface DangerZone {
   id: string;
   created_by: string;
   coordinates: any;
+  label: string
 }
+
+let isViolationTimerRunning = false;
+let lastViolation: any = null;
+let acknowledgeViolation = false;
 
 const SensorDataCollector = () => {
   const { t } = useTranslation();
@@ -33,29 +40,90 @@ const SensorDataCollector = () => {
   const [acceleration, setAcceleration] = useState(0);
   const dispatch: AppDispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.auth.userId);
-  console.log('logging user: ', userId);
-  
+
   const [dangerZones, setDangerZones] = useState<DangerZone[]>([]);
+  const [isViolationModalVisible, setViolationModalVisible] = useState(false);
+  const [violationTimer, setViolationTimer] = useState(10);
+  
+  const fetchDangerZones = async () => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from('danger_zones')
+      .select('*')
+      .eq('created_by', userId);
 
-  useEffect(() => {
-    const fetchDangerZones = async () => {
-      if (!userId) return;
-      const { data, error } = await supabase
-        .from('danger_zones')
-        .select('*')
-        .eq('created_by', userId);
+    if (error) {
+      console.error('Error fetching danger zones:', error);
+    } else {
+      setDangerZones(data || []);
+      dispatch(updateAlertZones(data || []));
+    }
+  };
 
-      if (error) {
-        console.error('Error fetching danger zones:', error);
-      } else {
-        // console.log('Fetched danger zones:', data);
-        setDangerZones(data || []);
-        dispatch(updateAlertZones(data || []));
+  const resetViolationState = () => {
+    setViolationModalVisible(false);
+    setViolationTimer(10);
+    isViolationTimerRunning = false
+  };
+
+  const handleViolation = (code: string, label: string) => {
+    console.log('aqui open: ', isViolationTimerRunning, lastViolation);
+    if (isViolationTimerRunning) {
+      return; // Ignore violations if timer is running
+    }
+
+    if (lastViolation?.timestamp){
+      const fiveMinutesInMilliseconds = 2 * 60 * 1000; // 2 minutes in milliseconds
+      const currentTime = Date.now();
+      const timeDifference = currentTime - lastViolation.timestamp;
+      console.log('timeDifference: ', timeDifference, fiveMinutesInMilliseconds);
+      if (timeDifference < fiveMinutesInMilliseconds){
+        return; // Ingore violations if the same has been added 5 mins ago
       }
+    }
+    console.log('aqui open 2');
+    
+    setViolationModalVisible(true);
+    isViolationTimerRunning = true;
+
+    let timerId: NodeJS.Timeout;
+
+    const tick = () => {
+      setViolationTimer((prevTimer) => {
+        if (prevTimer > 1) {
+          return prevTimer - 1;
+        } else {
+          if (userId && code) {
+            console.log(t('sensorDataCollector.dispatchingViolation'), userId, code);
+            lastViolation = {
+              code: code,
+              label: label,
+              timestamp: Date.now()
+            }
+            dispatch(addViolationToSupabase({ userId: userId, violationCode: code }));
+          }
+          resetViolationState();
+          clearTimeout(timerId);
+          return 0;
+        }
+      });
     };
 
-    fetchDangerZones();
+    timerId = setInterval(tick, 1000);
 
+    return () => clearInterval(timerId); // Cleanup the timer
+  };
+
+  const handleAcknowledgeViolation = () => {
+    resetViolationState();
+    lastViolation = {
+      code: 'ACKNOWLEDGE',
+      label: 'ACKNOWLEDGE',
+      timestamp: Date.now()
+    }
+  };
+
+  useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -63,7 +131,7 @@ const SensorDataCollector = () => {
         return;
       }
 
-      if (!userId){
+      if (!userId) {
         console.log('No user');
         return;
       }
@@ -76,48 +144,37 @@ const SensorDataCollector = () => {
               latitude: loc.coords.latitude,
               longitude: loc.coords.longitude,
             });
-            console.log(t('sensorDataCollector.location'), loc);
 
-            const kmConv =  3.6;
-            setSpeed(loc.coords.speed ? loc.coords.speed * kmConv : 0);
+            const kmConv = 3.6;
+            const speedKMH = (loc?.coords?.speed || 0) * kmConv;
+            setSpeed(speedKMH);
             dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
-            dispatch(updateSpeed(loc.coords.speed ? loc.coords.speed * kmConv : 0));
+            dispatch(updateSpeed(speedKMH));
 
-            // Check for speed limit violation
             const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
-            // console.log('spped limit: ', loc.coords.speed, currentSpeedLimit);
             dispatch(updateSpeedLimit(currentSpeedLimit));
-
-            if (loc.coords.speed !== null && loc.coords.speed > currentSpeedLimit) {
+            console.log('check speed: ', speedKMH, currentSpeedLimit);
+            if ((speedKMH !== null || speedKMH !== 0) && speedKMH > currentSpeedLimit) {
+              console.log('sending speed violation: ', speedKMH, currentSpeedLimit);
               const violationCode = 'SPEEDING';
-              // dispatch(addViolation(violationCode));
-              if (userId) {
-                console.log(t('sensorDataCollector.dispatchingViolation'), userId, violationCode);
-                dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
-              }
+              handleViolation(violationCode, violationCode);
             }
 
-            // Check if location is in danger zones
-            // console.log('checking alert zones: ', dangerZones);
             {
               dangerZones.length > 0 && dangerZones.forEach(dangerZone => {
-                const userPoint = point([loc.coords.longitude, loc.coords.latitude]); // [longitude, latitude]
+                const userPoint = point([loc.coords.longitude, loc.coords.latitude]);
                 const coords = dangerZone.coordinates;
+                // console.log('label: ', dangerZone.label);
                 if (coords && (typeof coords === 'object' && Object.keys(coords).length > 0)) {
                   const polygon = dangerZone.coordinates.features[0].geometry;
-                  // console.log('checking polygon: ', polygon);
-                  // console.log('checking alert polygon bool: ', booleanPointInPolygon(userPoint, polygon));
                   if (booleanPointInPolygon(userPoint, polygon)) {
-                    // console.log('GEOFENCE_VIOLATION: ', coords);
                     const violationCode = 'GEOFENCE_VIOLATION';
-                    // dispatch(addViolation(violationCode));
-                    dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+                    handleViolation(violationCode, dangerZone.label);
                   }
                 }
               });
             }
 
-            // Collect driver data
             const driverData = {
               speed: loc.coords.speed || 0,
               latitude: loc.coords.latitude,
@@ -126,7 +183,6 @@ const SensorDataCollector = () => {
               user_id: userId,
             };
 
-            // Send driver data to the database
             sendDriverData(driverData);
           }
         },
@@ -135,7 +191,7 @@ const SensorDataCollector = () => {
         }
       );
     })();
-  }, [dispatch, userId]);
+  }, [dispatch, dangerZones, userId]);
 
   useEffect(() => {
     Accelerometer.setUpdateInterval(200);
@@ -148,7 +204,47 @@ const SensorDataCollector = () => {
     return () => subscription.remove();
   }, [dispatch, userId]);
 
-  return null;
+  useEffect(()=>{
+    fetchDangerZones();
+  }, [userId])
+
+  return (
+    <Modal isVisible={isViolationModalVisible}>
+      <View style={styles.modalContainer}>
+        <Text style={styles.modalText}>
+          {t('sensorDataCollector.violationDetected')}! {violationTimer}
+        </Text>
+        <TouchableOpacity style={styles.modalButton} onPress={handleAcknowledgeViolation}>
+          <Text style={styles.modalButtonText}>{t('sensorDataCollector.acknowledge')}</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
 };
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  modalButton: {
+    backgroundColor: '#343b6e',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
 
 export default SensorDataCollector;
