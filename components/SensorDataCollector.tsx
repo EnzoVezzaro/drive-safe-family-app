@@ -99,22 +99,23 @@ const SensorDataCollector = () => {
 
             // Check if location is in danger zones
             // console.log('checking alert zones: ', dangerZones);
-            dangerZones.forEach(dangerZone => {
-              const userPoint = point([loc.coords.longitude, loc.coords.latitude]); // [longitude, latitude]
-              const coords = dangerZone.coordinates;
-              if (coords && (typeof coords === 'object' && Object.keys(coords).length > 0)) {
-                const polygon = dangerZone.coordinates.features[0].geometry;
-                console.log('checking polygon: ', polygon);
-                console.log('checking alert polygon bool: ', booleanPointInPolygon(userPoint, polygon));
-                if (booleanPointInPolygon(userPoint, polygon)) {
-                  console.log('GEOFENCE_VIOLATION: ', coords);
-                  const violationCode = 'GEOFENCE_VIOLATION';
-                  // dispatch(addViolation(violationCode));
-                  console.log(t('sensorDataCollector.dispatchingViolation'), userId, violationCode);
-                  dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+            {
+              dangerZones.length > 0 && dangerZones.forEach(dangerZone => {
+                const userPoint = point([loc.coords.longitude, loc.coords.latitude]); // [longitude, latitude]
+                const coords = dangerZone.coordinates;
+                if (coords && (typeof coords === 'object' && Object.keys(coords).length > 0)) {
+                  const polygon = dangerZone.coordinates.features[0].geometry;
+                  // console.log('checking polygon: ', polygon);
+                  // console.log('checking alert polygon bool: ', booleanPointInPolygon(userPoint, polygon));
+                  if (booleanPointInPolygon(userPoint, polygon)) {
+                    // console.log('GEOFENCE_VIOLATION: ', coords);
+                    const violationCode = 'GEOFENCE_VIOLATION';
+                    // dispatch(addViolation(violationCode));
+                    dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+                  }
                 }
-              }
-            });
+              });
+            }
 
             // Collect driver data
             const driverData = {

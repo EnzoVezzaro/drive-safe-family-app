@@ -120,7 +120,7 @@ export async function getScores(userId: string) {
     .from('violations')
     .select('*')
     .in('user_id', familyMemberIds);
-  console.log('fetching violations family: ', violations);
+  // console.log('fetching violations family: ', violations);
   
   if (violationsError) {
     console.error('Error fetching violations:', violationsError);

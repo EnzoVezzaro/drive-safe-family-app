@@ -24,7 +24,7 @@ const Leaderboard = () => {
         return;
       }
       const fetchedData = await getScores(userId); 
-      console.log('fetchedData: ', fetchedData);
+      // console.log('fetchedData: ', fetchedData);
 
       if (fetchedData && Array.isArray(fetchedData) === false) {
         setScores(fetchedData.scores);
@@ -43,7 +43,7 @@ const Leaderboard = () => {
         return;
       }
       const fetchedData = await getScores(userId);
-      console.log('fetchedData: ', fetchedData);
+      // console.log('fetchedData: ', fetchedData);
 
       if (fetchedData && Array.isArray(fetchedData) === false) {
         setScores(fetchedData.scores);

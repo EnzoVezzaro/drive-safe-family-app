@@ -191,6 +191,17 @@ const Drive = () => {
     });
   };
 
+  // New function to handle current location
+  const handleCurrentLocation = () => {
+    if (cameraRef.current && location && location.latitude && location.longitude) {
+      cameraRef.current.setCamera({
+        centerCoordinate: [location.longitude, location.latitude],
+        zoomLevel: zoomLevel,
+        animationDuration: 500,
+      });
+    }
+  };
+
   // Function to render alert zone items in the bottom sheet
   const renderAlertZoneList = () => {
     if (!alertZones || alertZones.length === 0) {
@@ -256,14 +267,22 @@ const Drive = () => {
           {renderAlertZones()}
         </MapboxGL.MapView>
 
-        {/* Zoom Controls */}
-        <View style={styles.zoomControls}>
-          <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
-            <Text style={styles.zoomButtonText}>+</Text>
+        {/* Location and Zoom Controls */}
+        <View style={styles.mapControlsContainer}>
+          {/* Current Location Button */}
+          <TouchableOpacity style={styles.locationButton} onPress={handleCurrentLocation}>
+            <Text style={styles.locationButtonIcon}>📍</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
-            <Text style={styles.zoomButtonText}>-</Text>
-          </TouchableOpacity>
+          
+          {/* Zoom Controls */}
+          <View style={styles.zoomControls}>
+            <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
+              <Text style={styles.zoomButtonText}>+</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
+              <Text style={styles.zoomButtonText}>-</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.tripButtonTop}>
@@ -346,11 +365,32 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-  // New zoom control styles
-  zoomControls: {
+  // Container for both location and zoom controls
+  mapControlsContainer: {
     position: 'absolute',
     left: 16,
     bottom: 20,
+  },
+  // Current location button
+  locationButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8, // Space between location and zoom controls
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  locationButtonIcon: {
+    fontSize: 20,
+  },
+  // Updated zoom controls
+  zoomControls: {
     backgroundColor: 'white',
     borderRadius: 8,
     shadowColor: '#000',
