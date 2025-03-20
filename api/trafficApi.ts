@@ -125,8 +125,6 @@ export async function getDriverDataAndViolations(userId: string): Promise<{ driv
       ],
     };
 
-    console.log('chartData ', chartData);
-
     return {
       drivingScore: drivingScoreValue,
       reaction: totalReaction,
@@ -212,11 +210,22 @@ export function isLocationInGeofence(latitude: number, longitude: number, geofen
 
 export async function sendDriverData(driverData: any): Promise<void> {
   try {
-    console.log('sending data: ', driverData);
-    
+    console.log('sending data 2: ', {
+      "latitude": driverData.latitude, 
+      "longitude": driverData.longitude, 
+      "speed": driverData.speed, 
+      "timestamp": driverData.timestamp, 
+      "user_id": driverData.user_id
+    });
     const { data, error } = await supabase
       .from('driving_data')
-      .insert([driverData]);
+      .insert([{
+        "latitude": driverData.latitude, 
+        "longitude": driverData.longitude, 
+        "speed": driverData.speed, 
+        "timestamp": driverData.timestamp, 
+        "user_id": driverData.user_id
+      }]);
 
     if (error) {
       console.error('Error inserting driving data:', error);

@@ -2,15 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateAcceleration, updateLocation, updateSpeed, updateViolations, addViolationToSupabase, updateSpeedLimit } from '../store/drivingSlice';
-import { getSpeedLimitMapbox, isLocationInGeofence, sendDriverData } from '../api/trafficApi';
+import { updateAcceleration, updateLocation, updateSpeed, updateViolations, addViolationToSupabase, updateSpeedLimit, updateAlertZones } from '../store/drivingSlice';
+import { getSpeedLimitMapbox, sendDriverData } from '../api/trafficApi';
 import { sendNotification } from '../api/notificationApi';
 import { RootState, AppDispatch } from '../store';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../lib/supabase';
+import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
+import { point } from '@turf/helpers';
 
 interface LocationObject {
   latitude: number | null;
   longitude: number | null;
+}
+
+interface DangerZone {
+  id: string;
+  created_by: string;
+  geometry: {
+    type: "Polygon";
+    coordinates: number[][][]
+  }
 }
 
 const SensorDataCollector = () => {
@@ -24,20 +36,38 @@ const SensorDataCollector = () => {
   const [acceleration, setAcceleration] = useState(0);
   const dispatch: AppDispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.auth.userId);
-  // const userId = 'deb3221a-ac1b-46a6-83e2-c3509095ab3a';
-
-  // Define a geofence for a school zone
-  const schoolZone = {
-    latitude: 37.7749, // Example latitude
-    longitude: -122.4194, // Example longitude
-    radius: 0.01, // Example radius (in degrees, approximate)
-  };
+  console.log('logging user: ', userId);
+  
+  const [dangerZones, setDangerZones] = useState<DangerZone[]>([]);
 
   useEffect(() => {
+    const fetchDangerZones = async () => {
+      if (!userId) return;
+      const { data, error } = await supabase
+        .from('danger_zones')
+        .select('*')
+        .eq('created_by', userId);
+
+      if (error) {
+        console.error('Error fetching danger zones:', error);
+      } else {
+        // console.log('Fetched danger zones:', data);
+        setDangerZones(data || []);
+        dispatch(updateAlertZones(data || []));
+      }
+    };
+
+    fetchDangerZones();
+
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         console.log(t('sensorDataCollector.permissionDenied'));
+        return;
+      }
+
+      if (!userId){
+        console.log('No user');
         return;
       }
 
@@ -70,15 +100,20 @@ const SensorDataCollector = () => {
               }
             }
 
-            // Check if location is in geofence
-            if (isLocationInGeofence(loc.coords.latitude, loc.coords.longitude, schoolZone)) {
-              const violationCode = 'GEOFENCE_VIOLATION';
-              // dispatch(addViolation(violationCode));
-              if (userId) {
-                console.log(t('sensorDataCollector.dispatchingViolation'), userId, violationCode);
-                dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+            // Check if location is in danger zones
+            dangerZones.forEach(dangerZone => {
+              const userPoint = point([loc.coords.longitude, loc.coords.latitude]); // [longitude, latitude]
+              const polygon = dangerZone.geometry;
+
+              if (booleanPointInPolygon(userPoint, polygon)) {
+                const violationCode = 'GEOFENCE_VIOLATION';
+                // dispatch(addViolation(violationCode));
+                if (userId) {
+                  console.log(t('sensorDataCollector.dispatchingViolation'), userId, violationCode);
+                  dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+                }
               }
-            }
+            });
 
             // Collect driver data
             const driverData = {
@@ -90,7 +125,9 @@ const SensorDataCollector = () => {
             };
 
             // Send driver data to the database
-            sendDriverData(driverData); 
+            if (userId) {
+              sendDriverData(driverData);
+            }
           }
         },
         (error) => {

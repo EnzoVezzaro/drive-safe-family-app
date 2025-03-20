@@ -6,6 +6,7 @@ import { setAuth } from '../../store/authSlice';
 import { Dispatch, SetStateAction } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
 
 interface SignInProps {
   setActiveScreen: Dispatch<SetStateAction<string>>;
@@ -25,12 +26,30 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
       Alert.alert('Sign In Failed', error.message);
     } else {
       if (data.session && data.session.user) {
-        dispatch(setAuth({ 
-          userId: data.session.user.id!, 
-          email: data.session.user.email!, 
-          role: data.session.user.app_metadata.role as 'family' | 'parent' 
-        }));
-        navigation.navigate('(tabs)' as never);
+        
+        // Fetch user data from the users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .single();
+
+        if (userError) {
+          Alert.alert('Error', 'Failed to fetch user data.');
+          console.error('Error fetching user data:', userError);
+          return;
+        }
+
+        if (userData) {
+          dispatch(setAuth({
+            userId: userData.id,
+            email: data.session.user.email!,
+            role: data.session.user.app_metadata.role as 'family' | 'parent'
+          }));
+          navigation.navigate('(tabs)' as never);
+        } else {
+          Alert.alert('Sign In Failed', 'Could not retrieve user data from users table.');
+        }
       } else {
         Alert.alert('Sign In Failed', 'Could not retrieve user data.');
       }

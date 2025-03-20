@@ -34,7 +34,6 @@ export default function HomeScreen() {
     const fetchData = async () => {
       try {
         const data = await getDriverDataAndViolations(userId);
-        console.log('data: ', data);
         setDrivingData(data);
       } catch (error) {
         console.error('Error fetching driver data:', error);

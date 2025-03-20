@@ -25,7 +25,8 @@ const Drive = () => {
   const location = useSelector((state: RootState) => state.driving.location);
   const score = useSelector((state: RootState) => state.driving.drivingScore);
   const { speedLimit } = useAppSelector(state => state.driving);
-
+  const alertZones = useSelector((state: RootState) => state.driving.alertZones);
+  
   useEffect(() => {
     if (userId) {
       dispatch(fetchDrivingData(userId));

@@ -11,6 +11,7 @@ interface DrivingState {
   violations: any[];
   drivingScore: number;
   speedLimit: number;
+  alertZones: any[];
 }
 
 const initialState: DrivingState = {
@@ -23,6 +24,7 @@ const initialState: DrivingState = {
   violations: [],
   drivingScore: 100,
   speedLimit: 30,
+  alertZones: []
 };
 
 export const addViolationToSupabase = createAsyncThunk(
@@ -74,6 +76,9 @@ const drivingSlice = createSlice({
     updateSpeedLimit: (state, action: PayloadAction<number>) => {
       state.speedLimit = action.payload;
     },
+    updateAlertZones: (state, action: PayloadAction<any[]>) => {
+      state.alertZones = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(addViolationToSupabase.fulfilled, (state, action) => {
@@ -107,6 +112,7 @@ export const {
   updateDrivingScore,
   updateViolations,
   updateSpeedLimit,
+  updateAlertZones
 } = drivingSlice.actions;
 
 export default drivingSlice.reducer;
