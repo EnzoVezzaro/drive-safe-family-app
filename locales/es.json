@@ -46,7 +46,13 @@
     "niceTrip": "¡Buen viaje!",
     "totalViolations": "Número total de infracciones de tráfico",
     "feedback": "Tu progreso es excelente, pero no te olvides de los límites de velocidad. También te recomendamos que reduzcas la velocidad cerca de los pasos de peatones.",
-    "tripDetails": "Ver detalles"
+    "tripDetails": "Ver detalles",
+    "alertZones": "Zonas de Alerta",
+    "noAlertZones": "No hay zonas de alerta cercanas",
+    "schoolZoneDescription": "Ten cuidado cerca de las escuelas.",
+    "accidentZoneDescription": "Ten cuidado, zona de accidente cercana.",
+    "otherZoneDescription": "Ten cuidado en esta área.",
+    "closePanel": "Cerrar Panel"
   },
   "leaderboard": {
     "noUserId": "No se encontró el ID de usuario en la tienda Redux",

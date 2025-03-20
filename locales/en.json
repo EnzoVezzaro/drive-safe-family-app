@@ -47,7 +47,13 @@
     "niceTrip": "¡Buen viaje!",
     "totalViolations": "Total number of road violations",
     "feedback": "Your progress is great, but don't forget about speed limits. We also recommend you to slow down near crosswalks.",
-    "tripDetails": "Ver detalles"
+    "tripDetails": "Ver detalles",
+    "alertZones": "Alert Zones",
+    "noAlertZones": "No alert zones nearby",
+    "schoolZoneDescription": "Be careful near schools.",
+    "accidentZoneDescription": "Be careful, accident zone nearby.",
+    "otherZoneDescription": "Be careful in this area.",
+    "closePanel": "Close Panel"
   },
   "leaderboard": {
     "noUserId": "No user ID found in Redux store",

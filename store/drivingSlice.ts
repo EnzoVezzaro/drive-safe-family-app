@@ -93,14 +93,31 @@ const drivingSlice = createSlice({
 export const fetchDrivingData = createAsyncThunk(
   'driving/fetchDrivingData',
   async (userId: string, { dispatch }) => {
-    const drivingData = await getDrivingStats(userId);
+    try {
+      // Fetch danger zones
+      const { data: dangerZonesData, error: dangerZonesError } = await supabase
+        .from('danger_zones')
+        .select('*')
+        .eq('created_by', userId);
 
-    if (drivingData) {
-      dispatch(updateViolations(drivingData.violations || []));
-      return drivingData;
-    } else {
-      console.error('Failed to fetch driving data');
-      throw new Error('Failed to fetch driving data');
+      if (dangerZonesError) {
+        console.error('Error fetching danger zones:', dangerZonesError);
+      } else {
+        dispatch(updateAlertZones(dangerZonesData || []));
+      }
+
+      const drivingData = await getDrivingStats(userId);
+
+      if (drivingData) {
+        dispatch(updateViolations(drivingData.violations || []));
+        return drivingData;
+      } else {
+        console.error('Failed to fetch driving data');
+        throw new Error('Failed to fetch driving data');
+      }
+    } catch (error) {
+      console.error('Error in fetchDrivingData:', error);
+      throw error;
     }
   }
 );
