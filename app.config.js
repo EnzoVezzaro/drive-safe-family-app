@@ -24,7 +24,10 @@ export default {
         "expo-location",
         {
           locationWhenInUsePermission: "Show current location on map.",
-          locationAlwaysAndWhenInUsePermission: "Allow $(PRODUCT_NAME) to use your location."
+          locationAlwaysAndWhenInUsePermission: "Allow $(PRODUCT_NAME) to use your location.",
+          isAndroidBackgroundLocationEnabled: true,
+          isIosBackgroundLocationEnabled: true,
+          isAndroidForegroundServiceEnabled: true
         }
       ],
       [
@@ -38,11 +41,19 @@ export default {
     experiments: {
       typedRoutes: true
     },
+    ios: {
+      infoPlist: {
+        NSLocationAlwaysUsageDescription: "We need your location to provide better services.",
+        NSLocationWhenInUseUsageDescription: "We need your location to provide better services."
+      }
+    },
     android: {
       permissions: [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_BACKGROUND_LOCATION"
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
       package: process.env.BUNDLE_IDENTIFIER || "com.anonymous.drivesafefamily"
     }
