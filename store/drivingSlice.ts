@@ -12,6 +12,7 @@ interface DrivingState {
   drivingScore: number;
   speedLimit: number;
   alertZones: any[];
+  locationTrackingEnabled: boolean;
 }
 
 const initialState: DrivingState = {
@@ -24,21 +25,27 @@ const initialState: DrivingState = {
   violations: [],
   drivingScore: 100,
   speedLimit: 30,
-  alertZones: []
+  alertZones: [],
+  locationTrackingEnabled: true,
 };
 
 export const addViolationToSupabase = createAsyncThunk(
   'driving/addViolationToSupabase',
-  async ({ userId, violationCode }: { userId: string; violationCode: string }, { getState }) => {
+  async ({ userId, violationCode, severity }: { userId: string; violationCode: string, severity: number }, { getState }) => {
     console.log('addViolationToSupabase called with:', { userId, violationCode });
     const state: any = getState();
     const { latitude, longitude } = state.driving.location;
 
     try {
-      console.log('addViolationToSupabase inserting:', { user_id: userId, type: violationCode, location: `${latitude},${longitude}` });
+      console.log('addViolationToSupabase inserting:', { user_id: userId, type: violationCode, location: `${latitude},${longitude}`, severity: severity });
       const { data, error } = await supabase
         .from('violations')
-        .insert([{ user_id: userId, type: violationCode, location: `${latitude},${longitude}` }]);
+        .insert([{ 
+          user_id: userId, 
+          type: violationCode, 
+          location: `${latitude},${longitude}`,
+          severity: severity 
+        }]);
 
       if (error) {
         console.error('Error inserting violation:', error);
@@ -78,6 +85,9 @@ const drivingSlice = createSlice({
     },
     updateAlertZones: (state, action: PayloadAction<any[]>) => {
       state.alertZones = action.payload;
+    },
+    updateLocationTracking: (state, action: PayloadAction<boolean>) => {
+      state.locationTrackingEnabled = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -129,7 +139,8 @@ export const {
   updateDrivingScore,
   updateViolations,
   updateSpeedLimit,
-  updateAlertZones
+  updateAlertZones,
+  updateLocationTracking
 } = drivingSlice.actions;
 
 export default drivingSlice.reducer;

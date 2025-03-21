@@ -98,7 +98,7 @@ const Leaderboard = () => {
                 }, {})
               ).map(([type, count]) => (
                 <View key={type} style={styles.violationItem}>
-                  <Text style={styles.violationText}>{Violations.ViolationLabels[type as keyof typeof Violations.ViolationLabels]}</Text>
+                  <Text style={styles.violationText}>{t(Violations.ViolationLabels[type as keyof typeof Violations.ViolationLabels])}</Text>
                   <Text style={styles.violationValue}>{String(count)}</Text>
                 </View>
               ))
@@ -119,7 +119,7 @@ const Leaderboard = () => {
                       style={styles.violationImage}
                     />
                     <View style={styles.violationInfo}>
-                      <Text style={styles.violationTitle}>{Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels]}</Text>
+                      <Text style={styles.violationTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
                       <Text style={styles.violationDescription}>{violation.timestamp}</Text>
                     </View>
                   </View>

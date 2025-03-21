@@ -106,7 +106,7 @@ const Profile = () => {
           {violationData && violationData.map((violation, index) => (
             <View key={index} style={styles.violationItem}>
               <View style={styles.violationHeader}>
-                <Text style={styles.violationType}>{Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels]}</Text>
+                <Text style={styles.violationType}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
                 <Text style={styles.violationCount}>{violation.percentage.toFixed(1)}%</Text>
               </View>
               <View style={styles.progressBarContainer}>
@@ -140,7 +140,7 @@ const Profile = () => {
                   style={styles.violationImage}
                 />
                 <View style={styles.violationCardContent}>
-                  <Text style={styles.violationCardTitle}>{Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels]}</Text>
+                  <Text style={styles.violationCardTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
                   <Text style={styles.violationCardDetails}>{violation.timestamp}</Text>
                 </View>
               </TouchableOpacity>

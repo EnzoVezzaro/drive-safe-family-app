@@ -210,12 +210,14 @@ export function isLocationInGeofence(latitude: number, longitude: number, geofen
 
 export async function sendDriverData(driverData: any): Promise<void> {
   try {
+    
     console.log('sending data 2: ', {
       "latitude": driverData.latitude, 
       "longitude": driverData.longitude, 
       "speed": driverData.speed, 
       "timestamp": driverData.timestamp, 
-      "user_id": driverData.user_id
+      "user_id": driverData.user_id,
+      "activity": driverData.activity
     });
     const { data, error } = await supabase
       .from('driving_data')
@@ -224,7 +226,8 @@ export async function sendDriverData(driverData: any): Promise<void> {
         "longitude": driverData.longitude, 
         "speed": driverData.speed, 
         "timestamp": driverData.timestamp, 
-        "user_id": driverData.user_id
+        "user_id": driverData.user_id,
+        "activity": driverData.activity
       }]);
 
     if (error) {

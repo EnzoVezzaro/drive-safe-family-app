@@ -1,6 +1,6 @@
 // app/settings.tsx
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Platform, Linking, Alert } from 'react-native';
 import { Text, Switch } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from 'react-native';
@@ -11,14 +11,18 @@ import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import { useNavigation } from '@react-navigation/native';
 import { signOut } from '../../lib/supabase';
 import { clearAuth } from '../../store/authSlice';
+import { updateLocation, updateLocationTracking } from '../../store/drivingSlice';
+import * as Location from 'expo-location';
+import { sendDriverData } from '@/api/trafficApi';
 
 const Settings = () => {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
   const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
+  const userId = useAppSelector((state) => state.auth.userId);
   const dispatch = useAppDispatch();
   const [notificationEnabled, setNotificationEnabled] = useState(false);
-  const [locationTrackingEnabled, setLocationTrackingEnabled] = useState(true);
+  const locationTrackingEnabled = useAppSelector((state) => state.driving.locationTrackingEnabled);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('es');
@@ -43,9 +47,87 @@ const Settings = () => {
     setNotificationEnabled(!notificationEnabled);
   };
 
-  const handleLocationTrackingToggle = () => {
-    setLocationTrackingEnabled(!locationTrackingEnabled);
+  const handleLocationTrackingToggle = async () => {
+    const requestForegroundPermissions = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return false;
+      }
+      return true;
+    };
+
+    const requestBackgroundPermissions = async () => {
+      const { status } = await Location.requestBackgroundPermissionsAsync();
+      return status === 'granted';
+    };
+
+    const getLocationData = async () => {
+      const location = await Location.getCurrentPositionAsync({});
+      return {
+        speed: location.coords.speed || 0,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        timestamp: new Date().toISOString(),
+      };
+    };
+
+    const sendTrackingData = async (activity: string) => {
+      const locationData = await getLocationData();
+      const driverData = {
+        ...locationData,
+        user_id: userId,
+        activity,
+      };
+      console.log('seding data: ', driverData);
+      sendDriverData(driverData);
+    };
+
+    const showAppSettingsAlert = () => {
+      const openAppSettings = () => Linking.openURL('app-settings:');
+      Alert.alert(
+        'Allow Wassupp to Use your Location',
+        'Open your app settings to allow Wassupp to access your current position. Without it, you won’t be able to use the love compass',
+        [
+          { text: 'Cancel', onPress: () => console.warn('Cancel pressed') },
+          { text: 'Open settings', onPress: openAppSettings },
+        ]
+      );
+    };
+
+    if (!locationTrackingEnabled) {
+      const foregroundPermissionGranted = await requestForegroundPermissions();
+      if (foregroundPermissionGranted) {
+        await sendTrackingData('TRACKING_ON');
+        dispatch(updateLocationTracking(true));
+        const backgroundPermissionGranted = await requestBackgroundPermissions();
+        if (!backgroundPermissionGranted) {
+          console.warn('Background permission not granted');
+        }
+      } else {
+        showAppSettingsAlert();
+      }
+    } else {
+      const foregroundPermissionGranted = await requestForegroundPermissions();
+      if (foregroundPermissionGranted) {
+        await sendTrackingData('TRACKING_OFF')
+      } else {
+        const driverData = {
+          speed: 0,
+          latitude: 0,
+          longitude: 0,
+          timestamp: new Date().toISOString(),
+          user_id: userId,
+          activity: 'TRACKING_OFF',
+        };
+        sendDriverData(driverData);
+      }
+      dispatch(updateLocationTracking(false));
+    }
   };
+
+  useEffect(() => {
+    console.log('Location tracking enabled:', locationTrackingEnabled);
+  }, [locationTrackingEnabled]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

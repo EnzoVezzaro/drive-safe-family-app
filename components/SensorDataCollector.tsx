@@ -53,9 +53,12 @@ export const collectSensorData = async (dispatch: AppDispatch, userId: string, d
           console.log('check speed: ', speedKMH, currentSpeedLimit);
           if ((speedKMH !== null || speedKMH !== 0) && speedKMH > currentSpeedLimit) {
             console.log('sending speed violation: ', speedKMH, currentSpeedLimit);
-            const violationCode = 'SPEEDING';
+            const violationCode = 'SPEEDING'; 
+            const sev = detectSeverity(violationCode, speedKMH)
             // handleViolation(violationCode, violationCode); // Need to figure out how to handle violations in background
-            dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+            if (!acknowledgeViolation){
+              dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev }));
+            }
           }
 
           {
@@ -66,22 +69,28 @@ export const collectSensorData = async (dispatch: AppDispatch, userId: string, d
                 const polygon = dangerZone.coordinates.features[0].geometry;
                 if (booleanPointInPolygon(userPoint, polygon)) {
                   const violationCode = 'GEOFENCE_VIOLATION';
+                  const sev = detectSeverity(violationCode, speedKMH || 0)
                   // handleViolation(violationCode, dangerZone.label); // Need to figure out how to handle violations in background
-                  dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+                  if (!acknowledgeViolation){
+                    dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev }));
+                  }
                 }
               }
             });
           }
 
-          const driverData = {
-            speed: loc.coords.speed || 0,
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-            timestamp: new Date().toISOString(),
-            user_id: userId,
-          };
-
-          sendDriverData(driverData);
+          if (loc.coords.speed) {
+            const driverData = {
+              speed: loc.coords.speed || 0,
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              timestamp: new Date().toISOString(),
+              user_id: userId,
+              activity: await detectActivity(loc.coords.speed || 0)
+            };
+  
+            sendDriverData(driverData);
+          }
         }
       },
       (error) => {
@@ -91,6 +100,64 @@ export const collectSensorData = async (dispatch: AppDispatch, userId: string, d
   } catch (error) {
     console.error('Error collecting sensor data:', error);
   }
+};
+
+export const detectActivity = (speed: number) => {
+  // Threshold for walking and driving at low speed
+  if (speed < 5) {
+    return 'WALKING';  // Considered walking
+  } else if (speed >= 5 && speed <= 15) {
+    return 'DRIVING_LOW_SPEED';  // Considered low-speed driving
+  } else {
+    return 'DRIVING';  // Considered normal driving
+  }
+};
+
+// Thresholds for speeding
+const SPEEDING_THRESHOLDS = {
+  LOW: 20, // Mild speeding (e.g., 20 km/h over the limit)
+  MODERATE: 40, // Moderate speeding (e.g., 40 km/h over the limit)
+  HIGH: 60, // High speeding (e.g., 60 km/h over the limit)
+};
+
+export const detectSeverity = (violationType: string, speed?: number) => {
+  let severity = 1;
+
+  switch (violationType) {
+    case 'RED_LIGHT':
+      severity = 5; // High severity for running a red light
+      break;
+    case 'SPEEDING':
+      if (speed !== undefined) {
+        // Severity based on how much the speed exceeds the speed limit
+        if (speed <= SPEEDING_THRESHOLDS.LOW) {
+          severity = 1; // Mild speeding
+        } else if (speed <= SPEEDING_THRESHOLDS.MODERATE) {
+          severity = 2; // Moderate speeding
+        } else if (speed <= SPEEDING_THRESHOLDS.HIGH) {
+          severity = 3; // High speeding
+        } else {
+          severity = 4; // Extremely high speeding
+        }
+      } else {
+        severity = 1; // No speed provided
+      }
+      break;
+    case 'PARKING':
+      severity = 2; // Moderate severity for illegal parking
+      break;
+    case 'CROSSWALK':
+      severity = 3; // High severity for crossing on a crosswalk improperly
+      break;
+    case 'GEOFENCE':
+      severity = 1; // Mild severity for geofence violations
+      break;
+    default:
+      severity = 1; // Default severity for unrecognized violation types
+      break;
+  }
+
+  return severity;
 };
 
 const SensorDataCollector = () => {
@@ -131,7 +198,7 @@ const SensorDataCollector = () => {
   };
 
   const handleViolation = (code: string, label: string) => {
-    console.log('aqui open: ', isViolationTimerRunning, lastViolation);
+    // console.log('aqui open: ', isViolationTimerRunning, lastViolation);
     if (isViolationTimerRunning) {
       return; // Ignore violations if timer is running
     }
@@ -140,13 +207,11 @@ const SensorDataCollector = () => {
       const fiveMinutesInMilliseconds = 2 * 60 * 1000; // 2 minutes in milliseconds
       const currentTime = Date.now();
       const timeDifference = currentTime - lastViolation.timestamp;
-      console.log('timeDifference: ', timeDifference, fiveMinutesInMilliseconds);
+      // console.log('timeDifference: ', timeDifference, fiveMinutesInMilliseconds);
       if (timeDifference < fiveMinutesInMilliseconds){
         return; // Ingore violations if the same has been added 5 mins ago
       }
     }
-    console.log('aqui open 2');
-    
     setViolationModalVisible(true);
     isViolationTimerRunning = true;
 
@@ -158,13 +223,16 @@ const SensorDataCollector = () => {
           return prevTimer - 1;
         } else {
           if (userId && code) {
-            console.log(t('sensorDataCollector.dispatchingViolation'), userId, code);
+            // console.log(t('sensorDataCollector.dispatchingViolation'), userId, code);
             lastViolation = {
               code: code,
               label: label,
               timestamp: Date.now()
+            } 
+            const sev = detectSeverity(code, speed)
+            if (!acknowledgeViolation){
+              dispatch(addViolationToSupabase({ userId: userId, violationCode: code, severity: sev }));
             }
-            dispatch(addViolationToSupabase({ userId: userId, violationCode: code }));
           }
           resetViolationState();
           clearTimeout(timerId);
@@ -194,8 +262,6 @@ const SensorDataCollector = () => {
         console.log(t('sensorDataCollector.permissionDenied'));
         return;
       }
-
-      await Location.requestBackgroundPermissionsAsync();
 
       if (!userId) {
         console.log('No user');
@@ -241,15 +307,18 @@ const SensorDataCollector = () => {
               });
             }
 
-            const driverData = {
-              speed: loc.coords.speed || 0,
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude,
-              timestamp: new Date().toISOString(),
-              user_id: userId,
-            };
-
-            sendDriverData(driverData);
+            if (loc.coords.speed) {
+              const driverData = {
+                speed: loc.coords.speed || 0,
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude,
+                timestamp: new Date().toISOString(),
+                user_id: userId,
+                activity: await detectActivity(loc.coords.speed || 0)
+              };
+  
+              sendDriverData(driverData);
+            }
           }
         },
         (error) => {

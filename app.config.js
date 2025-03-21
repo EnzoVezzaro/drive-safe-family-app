@@ -23,7 +23,8 @@ export default {
       [
         "expo-location",
         {
-          locationWhenInUsePermission: "Show current location on map."
+          locationWhenInUsePermission: "Show current location on map.",
+          locationAlwaysAndWhenInUsePermission: "Allow $(PRODUCT_NAME) to use your location."
         }
       ],
       [
@@ -40,7 +41,8 @@ export default {
     android: {
       permissions: [
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
       ],
       package: process.env.BUNDLE_IDENTIFIER || "com.anonymous.drivesafefamily"
     }
