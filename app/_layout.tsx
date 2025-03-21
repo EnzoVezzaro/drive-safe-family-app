@@ -6,9 +6,40 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { I18nextProvider } from 'react-i18next';
 import i18next from '../i18n';
+import { BACKGROUND_FETCH_TASK, registerBackgroundFetchAsync, unregisterBackgroundFetchAsync } from '../backgroundTasks';
+import { useEffect, useState } from 'react';
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
 
 function RootLayoutInner() {
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [status, setStatus] = useState<BackgroundFetch.BackgroundFetchStatus | null>(null);
+
   useFrameworkReady();
+
+  const checkStatusAsync = async () => {
+    const statusBackground = await BackgroundFetch.getStatusAsync();
+    console.log('Checking background status: ', statusBackground);
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+    console.log('Checking background register: ', isRegistered);
+    setStatus(statusBackground);
+    setIsRegistered(isRegistered);
+    console.log('Status: ', BackgroundFetch.BackgroundFetchStatus[statusBackground || 0]);
+  };
+
+  const toggleFetchTask = async () => {
+    if (isRegistered) {
+      await unregisterBackgroundFetchAsync();
+    } else {
+      await registerBackgroundFetchAsync();
+    }
+
+    checkStatusAsync();
+  };
+
+  useEffect(() => {
+    toggleFetchTask();
+  }, []);
 
   return (
     <>

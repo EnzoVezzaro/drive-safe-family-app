@@ -29,6 +29,70 @@ let isViolationTimerRunning = false;
 let lastViolation: any = null;
 let acknowledgeViolation = false;
 
+export const collectSensorData = async (dispatch: AppDispatch, userId: string, dangerZones: DangerZone[]) => {
+  try {
+    console.log('[BackgroundFetch] Sensor data collection checking permissions.');
+    let { status } = await Location.requestBackgroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Permission to access location was denied.');
+      return;
+    }
+
+    await Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 10 },
+      async (loc) => {
+        if (loc) {
+          console.log('[BackgroundFetch] Sensor data collection getting coords.');
+          const kmConv = 3.6;
+          const speedKMH = (loc?.coords?.speed || 0) * kmConv;
+          dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
+          dispatch(updateSpeed(speedKMH));
+
+          const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
+          dispatch(updateSpeedLimit(currentSpeedLimit));
+          console.log('check speed: ', speedKMH, currentSpeedLimit);
+          if ((speedKMH !== null || speedKMH !== 0) && speedKMH > currentSpeedLimit) {
+            console.log('sending speed violation: ', speedKMH, currentSpeedLimit);
+            const violationCode = 'SPEEDING';
+            // handleViolation(violationCode, violationCode); // Need to figure out how to handle violations in background
+            dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+          }
+
+          {
+            dangerZones.length > 0 && dangerZones.forEach(dangerZone => {
+              const userPoint = point([loc.coords.longitude, loc.coords.latitude]);
+              const coords = dangerZone.coordinates;
+              if (coords && (typeof coords === 'object' && Object.keys(coords).length > 0)) {
+                const polygon = dangerZone.coordinates.features[0].geometry;
+                if (booleanPointInPolygon(userPoint, polygon)) {
+                  const violationCode = 'GEOFENCE_VIOLATION';
+                  // handleViolation(violationCode, dangerZone.label); // Need to figure out how to handle violations in background
+                  dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode }));
+                }
+              }
+            });
+          }
+
+          const driverData = {
+            speed: loc.coords.speed || 0,
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            timestamp: new Date().toISOString(),
+            user_id: userId,
+          };
+
+          sendDriverData(driverData);
+        }
+      },
+      (error) => {
+        console.log('Error watching position: ', error);
+      }
+    );
+  } catch (error) {
+    console.error('Error collecting sensor data:', error);
+  }
+};
+
 const SensorDataCollector = () => {
   const { t } = useTranslation();
   console.log('SensorDataCollector is running');
@@ -130,6 +194,8 @@ const SensorDataCollector = () => {
         console.log(t('sensorDataCollector.permissionDenied'));
         return;
       }
+
+      await Location.requestBackgroundPermissionsAsync();
 
       if (!userId) {
         console.log('No user');
