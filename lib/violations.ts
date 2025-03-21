@@ -2,12 +2,14 @@ export const RED_LIGHT = 'RED_LIGHT';
 export const SPEEDING = 'SPEEDING';
 export const PARKING = 'PARKING';
 export const CROSSWALK = 'CROSSWALK';
+export const GEOFENCE = 'GEOFENCE_VIOLATION';
 
 export const ViolationLabels = {
-  [RED_LIGHT]: 'Red Light',
-  [SPEEDING]: 'Speeding',
-  [PARKING]: 'Parking',
-  [CROSSWALK]: 'Crosswalk',
+  [RED_LIGHT]: 'violation.RED_LIGHT',
+  [SPEEDING]: 'violation.SPEEDING',
+  [PARKING]: 'violation.PARKING',
+  [CROSSWALK]: 'violation.CROSSWALK',
+  [GEOFENCE]: 'violation.GEOFENCE_VIOLATION',
 };
 
 export const ViolationColors = (type: string) => {
