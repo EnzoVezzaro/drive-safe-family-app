@@ -206,34 +206,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f2f5',
     marginTop: Platform.OS === 'android' ? 50 : 0,
-    },
-    scrollView: {
+  },
+  scrollView: {
     flex: 0,
     paddingHorizontal: 16,
     paddingBottom: 16,
-    },
-    headerCard: {
+  },
+  headerCard: {
     backgroundColor: '#343b6e',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    },
-    profileSection: {
+  },
+  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    },
-    avatarContainer: {
+  },
+  avatarContainer: {
     position: 'relative',
     marginRight: 12,
-    },
-    avatar: {
+  },
+  avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
     alignContent: 'center'
-    },
-    starBadge: {
+  },
+  starBadge: {
     position: 'absolute',
     top: -5,
     right: -5,
@@ -243,55 +243,55 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    },
-    starText: {
+  },
+  starText: {
     color: 'white',
     fontSize: 12,
-    },
-    userInfo: {
+  },
+  userInfo: {
     flex: 1,
-    },
-    userName: {
+  },
+  userName: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
-    },
-    userSubtext: {
+  },
+  userSubtext: {
     color: '#d0d0d0',
     fontSize: 14,
-    },
-    startRouteButton: {
+  },
+  startRouteButton: {
     backgroundColor: '#3dc2ff',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 16,
-    },
-    startRouteText: {
+  },
+  startRouteText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-    },
-    skillCard: {
+  },
+  skillCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     alignItems: 'center',
-    },
-    sectionTitle: {
+  },
+  sectionTitle: {
     fontSize: 18,
     color: '#333',
     marginBottom: 16,
     fontWeight: '500',
     textAlign: 'center',
-    },
-    circularProgressContainer: {
+  },
+  circularProgressContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    },
-    circularProgress: {
+  },
+  circularProgress: {
     width: 150,
     height: 150,
     borderRadius: 75,
@@ -299,16 +299,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    },
-    progressBackgroundCircle: {
+  },
+  progressBackgroundCircle: {
     position: 'absolute',
     width: 150,
     height: 150,
     borderRadius: 75,
     borderWidth: 10,
     borderColor: '#f0f0f0',
-    },
-    progressIndicator: {
+  },
+  progressIndicator: {
     position: 'absolute',
     width: 150,
     height: 150,
@@ -320,85 +320,85 @@ const styles = StyleSheet.create({
     borderRightColor: '#6366f1',
     borderTopColor: '#6366f1',
     transform: [{ rotate: '45deg' }],
-    },
-    progressPercentage: {
+  },
+  progressPercentage: {
     fontSize: 36,
     fontWeight: 'bold',
     color: '#343b6e',
-    },
-    progressLabel: {
+  },
+  progressLabel: {
     fontSize: 12,
     color: '#666',
-    },
-    drivingStatsContainer: {
+  },
+  drivingStatsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
     paddingHorizontal: 10,
-    },
-    statItem: {
+  },
+  statItem: {
     alignItems: 'center',
-    },
-    statLabel: {
+  },
+  statLabel: {
     fontSize: 14,
     color: '#666',
-    },
-    statValuePurple: {
+  },
+  statValuePurple: {
     color: '#9370DB',
     fontWeight: 'bold',
-    },
-    statValueBlue: {
+  },
+  statValueBlue: {
     color: '#6366f1',
     fontWeight: 'bold',
-    },
-    statValueCyan: {
+  },
+  statValueCyan: {
     color: '#4DD0E1',
     fontWeight: 'bold',
-    },
-    progressCard: {
+  },
+  progressCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    },
-    progressHeader: {
+  },
+  progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-    },
-    progressTitle: {
+  },
+  progressTitle: {
     fontSize: 18,
     color: '#333',
     fontWeight: '500',
-    },
-    seeDetailsText: {
+  },
+  seeDetailsText: {
     color: '#6366f1',
     fontSize: 14,
-    },
-    chartContainer: {
+  },
+  chartContainer: {
     position: 'relative',
     alignItems: 'center',
-    },
-    chart: {
+  },
+  chart: {
     borderRadius: 8,
-    },
-    selectedPointContainer: {
+  },
+  selectedPointContainer: {
     position: 'absolute',
     left: '50%',
     top: '50%',
     alignItems: 'center',
     transform: [{ translateX: -15 }, { translateY: 0 }],
-    },
-    selectedPoint: {
+  },
+  selectedPoint: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: '#3dc2ff',
     borderWidth: 2,
     borderColor: 'white',
-    },
-    selectedPointLabel: {
+  },
+  selectedPointLabel: {
     backgroundColor: 'white',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -406,9 +406,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3dc2ff',
     marginTop: -25,
-    },
-    selectedPointText: {
+  },
+  selectedPointText: {
     color: '#333',
     fontSize: 12,
-    },
-    });
+  },
+});
