@@ -93,15 +93,19 @@ export async function getDrivingStats(userId: string): Promise<{ totalTrips: num
   };
 }
 
-export async function getScores(userId: string) {
+export async function getScores(userId: string, isFamily: boolean = false) {
   if (!userId) {
     console.error('No user ID provided');
     return null;
   }
 
   // Call the PostgreSQL function get_scores with the userId as input
+  console.log('Getting info for: ', isFamily ? 'Family' : 'Me');
   let { data, error } = await supabase
-    .rpc('get_scores', { input_user_id: userId })
+    .rpc('get_scores', { 
+      input_user_id: userId,
+      isfamily: isFamily 
+    })
 
   if (error) {
     console.error('Error fetching scores:', error);

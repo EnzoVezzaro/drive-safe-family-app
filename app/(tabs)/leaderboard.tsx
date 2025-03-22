@@ -10,10 +10,29 @@ import { useTranslation } from 'react-i18next';
 import Loading from '../../components/Loading';
 import { supabase } from '../../lib/supabase';
 
+type ViolationType = {
+  count: number;
+  severity_1: number;
+  severity_2: number;
+  severity_3: number;
+  severity_4: number;
+  severity_5: number;
+};
+
+type ViolationTypesCount = Record<string, ViolationType>;
+
+type ScoreEntry = {
+  user_id: string;
+  email: string;
+  total_violations: number;
+  violation_types_count: ViolationTypesCount;
+  score: number;
+};
+
 const Leaderboard = () => {
   const { t } = useTranslation();
   const [scores, setScores] = useState<any[] | null>(null);
-  const [violations, setViolations] = useState<any[] | null>(null);
+  const [violations, setViolations] = useState<ViolationTypesCount>({});
   const [recentViolations, setRecentViolations] = useState<any[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,7 +48,7 @@ const Leaderboard = () => {
         setLoading(false);
         return;
       }
-      const familyScore = await getScores(userId);
+      const familyScore = await getScores(userId, true);
       if (familyScore && Array.isArray(familyScore) === true) {
         setScores(familyScore);
         setViolations(familyScore[0]?.violation_types_count || {});
@@ -64,12 +83,37 @@ const Leaderboard = () => {
         setLoading(false);
         return;
       }
-      const familyScore = await getScores(userId);
+      const familyScore = await getScores(userId, true);
+      console.log('familyScore: ', JSON.stringify(familyScore));
       if (familyScore && Array.isArray(familyScore) === true) {
         setScores(familyScore);
         setViolations(familyScore[0]?.violation_types_count || {});
       }
 
+      if (Array.isArray(familyScore) && familyScore.length > 0) {
+        setScores(familyScore);
+        
+        // Sumar todas las violaciones dentro del grupo
+        const sumViolations = (scores: ScoreEntry[]): ViolationTypesCount => {
+          return scores.reduce((acc, { violation_types_count }) => {
+            Object.entries(violation_types_count).forEach(([violation, data]) => {
+              if (!acc[violation]) {
+                acc[violation] = { count: 0, severity_1: 0, severity_2: 0, severity_3: 0, severity_4: 0, severity_5: 0 };
+              }
+              acc[violation].count += data.count || 0;
+              acc[violation].severity_1 += data.severity_1 || 0;
+              acc[violation].severity_2 += data.severity_2 || 0;
+              acc[violation].severity_3 += data.severity_3 || 0;
+              acc[violation].severity_4 += data.severity_4 || 0;
+              acc[violation].severity_5 += data.severity_5 || 0;
+            });
+            return acc;
+          }, {} as ViolationTypesCount);
+        };
+  
+        const totalViolations = sumViolations(familyScore);
+        setViolations(totalViolations);
+      }
       // Fetch recent violations
       const { data: recentViolationsData, error: recentViolationsError } = await supabase
         .from('violations')
