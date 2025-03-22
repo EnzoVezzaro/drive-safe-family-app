@@ -6,7 +6,7 @@ import { store } from './store';
 
 export const BACKGROUND_FETCH_TASK = 'sensor-data-fetch';
 
-TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+TaskManager.defineTask(BACKGROUND_FETCH_TASK, async ({ data, error }: any) => {
   const now = Date.now();
 
   console.log(`[BackgroundFetch] Task started at: ${new Date(now).toISOString()}`);
@@ -16,27 +16,19 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   const dangerZones = state.driving.alertZones;
 
   console.log(`[BackgroundFetch] User ID: ${userId}`);
+  console.log(`[BackgroundFetch] Data:`, data ? 'true' : false);
+  console.log(`[BackgroundFetch] Error:`, error);
 
   // Call the collectSensorData function
   if (userId) {
-    console.log('[BackgroundFetch] Collecting sensor data...');
-    await collectSensorData(store.dispatch, userId, dangerZones);
-    console.log('[BackgroundFetch] Sensor data collection complete.');
+    console.log(`[BackgroundFetch] Location:`, data?.locations ? 'true' : 'false');
+    if (data?.locations){
+      const coords = data?.locations[0];
+      console.log('[BackgroundFetch] Collecting sensor data...');
+      await collectSensorData(store.dispatch, userId, dangerZones, coords);
+      console.log('[BackgroundFetch] Sensor data collection complete.');
+    }
   } else {
     console.log('No user ID available for background task.');
   }
-
-  return BackgroundFetch.BackgroundFetchResult.NewData;
 });
-
-export async function registerBackgroundFetchAsync() {
-  return BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-    minimumInterval: 60 * 5, // 5 minutes
-    stopOnTerminate: false, // android only,
-    startOnBoot: true, // android only
-  });
-}
-
-export async function unregisterBackgroundFetchAsync() {
-  return BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
-}

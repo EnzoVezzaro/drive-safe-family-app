@@ -1,17 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateAcceleration, updateLocation, updateSpeed, updateViolations, addViolationToSupabase, updateSpeedLimit, updateAlertZones } from '../store/drivingSlice';
+import { updateAcceleration, updateLocation, updateSpeed, updateSpeedLimit, updateAlertZones, addViolationToSupabase } from '../store/drivingSlice';
 import { getSpeedLimitMapbox, sendDriverData } from '../api/trafficApi';
-import { sendNotification } from '../api/notificationApi';
 import { RootState, AppDispatch } from '../store';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { point } from '@turf/helpers';
 import Modal from 'react-native-modal';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, AppState, AppStateStatus } from 'react-native';
+import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks';
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
+import { throttle, debounce } from 'lodash';
 
 interface LocationObject {
   latitude: number | null;
@@ -25,139 +28,127 @@ interface DangerZone {
   label: string
 }
 
-let isViolationTimerRunning = false;
-let lastViolation: any = null;
-let acknowledgeViolation = false;
-
-export const collectSensorData = async (dispatch: AppDispatch, userId: string, dangerZones: DangerZone[]) => {
-  try {
-    console.log('[BackgroundFetch] Sensor data collection checking permissions.');
-    let { status } = await Location.requestBackgroundPermissionsAsync();
-    if (status !== 'granted') {
-      console.log('Permission to access location was denied.');
-      return;
-    }
-
-    await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 10 },
-      async (loc) => {
-        if (loc) {
-          console.log('[BackgroundFetch] Sensor data collection getting coords.');
-          const kmConv = 3.6;
-          const speedKMH = (loc?.coords?.speed || 0) * kmConv;
-          dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
-          dispatch(updateSpeed(speedKMH));
-
-          const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
-          dispatch(updateSpeedLimit(currentSpeedLimit));
-          console.log('check speed: ', speedKMH, currentSpeedLimit);
-          if ((speedKMH !== null || speedKMH !== 0) && speedKMH > currentSpeedLimit) {
-            console.log('sending speed violation: ', speedKMH, currentSpeedLimit);
-            const violationCode = 'SPEEDING'; 
-            const sev = detectSeverity(violationCode, speedKMH)
-            // handleViolation(violationCode, violationCode); // Need to figure out how to handle violations in background
-            if (!acknowledgeViolation){
-              dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev }));
-            }
-          }
-
-          {
-            dangerZones.length > 0 && dangerZones.forEach(dangerZone => {
-              const userPoint = point([loc.coords.longitude, loc.coords.latitude]);
-              const coords = dangerZone.coordinates;
-              if (coords && (typeof coords === 'object' && Object.keys(coords).length > 0)) {
-                const polygon = dangerZone.coordinates.features[0].geometry;
-                if (booleanPointInPolygon(userPoint, polygon)) {
-                  const violationCode = 'GEOFENCE_VIOLATION';
-                  const sev = detectSeverity(violationCode, speedKMH || 0)
-                  // handleViolation(violationCode, dangerZone.label); // Need to figure out how to handle violations in background
-                  if (!acknowledgeViolation){
-                    dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev }));
-                  }
-                }
-              }
-            });
-          }
-
-          if (loc.coords.speed) {
-            const driverData = {
-              speed: loc.coords.speed || 0,
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude,
-              timestamp: new Date().toISOString(),
-              user_id: userId,
-              activity: await detectActivity(loc.coords.speed || 0)
-            };
-  
-            sendDriverData(driverData);
-          }
-        }
-      },
-      (error) => {
-        console.log('Error watching position: ', error);
-      }
-    );
-  } catch (error) {
-    console.error('Error collecting sensor data:', error);
-  }
-};
-
 export const detectActivity = (speed: number) => {
-  // Threshold for walking and driving at low speed
-  if (speed < 5) {
-    return 'WALKING';  // Considered walking
+  if (speed < 2) {
+    return 'STATIONARY';
+  } else if (speed >= 2 && speed <= 5) {
+    return 'WALKING';
   } else if (speed >= 5 && speed <= 15) {
-    return 'DRIVING_LOW_SPEED';  // Considered low-speed driving
+    return 'DRIVING_LOW_SPEED';
+  } else if (speed >= 120) {
+    return 'DRIVING_HIGH_SPEED';
   } else {
-    return 'DRIVING';  // Considered normal driving
+    return 'DRIVING';
   }
 };
 
 // Thresholds for speeding
 const SPEEDING_THRESHOLDS = {
-  LOW: 20, // Mild speeding (e.g., 20 km/h over the limit)
-  MODERATE: 40, // Moderate speeding (e.g., 40 km/h over the limit)
-  HIGH: 60, // High speeding (e.g., 60 km/h over the limit)
+  LOW: 20,
+  MODERATE: 40,
+  HIGH: 60,
 };
 
-export const detectSeverity = (violationType: string, speed?: number) => {
+export const detectSeverity = (violationType: string, speed?: number, speedLimit?: number) => {
   let severity = 1;
 
   switch (violationType) {
     case 'RED_LIGHT':
-      severity = 5; // High severity for running a red light
+      severity = 5;
       break;
     case 'SPEEDING':
       if (speed !== undefined) {
-        // Severity based on how much the speed exceeds the speed limit
-        if (speed <= SPEEDING_THRESHOLDS.LOW) {
-          severity = 1; // Mild speeding
-        } else if (speed <= SPEEDING_THRESHOLDS.MODERATE) {
-          severity = 2; // Moderate speeding
-        } else if (speed <= SPEEDING_THRESHOLDS.HIGH) {
-          severity = 3; // High speeding
+        const limit = speedLimit || 0
+        if ((speed - limit) <= SPEEDING_THRESHOLDS.LOW) {
+          severity = 1;
+        } else if ((speed - limit) <= SPEEDING_THRESHOLDS.MODERATE) {
+          severity = 2;
+        } else if ((speed - limit) <= SPEEDING_THRESHOLDS.HIGH) {
+          severity = 3;
         } else {
-          severity = 4; // Extremely high speeding
+          severity = 4;
         }
       } else {
-        severity = 1; // No speed provided
+        severity = 1;
       }
       break;
     case 'PARKING':
-      severity = 2; // Moderate severity for illegal parking
+      severity = 2;
       break;
     case 'CROSSWALK':
-      severity = 3; // High severity for crossing on a crosswalk improperly
+      severity = 3;
       break;
     case 'GEOFENCE':
-      severity = 1; // Mild severity for geofence violations
+    case 'GEOFENCE_VIOLATION':
+      severity = 1;
       break;
     default:
-      severity = 1; // Default severity for unrecognized violation types
+      severity = 1;
       break;
   }
 
   return severity;
+};
+
+export const collectSensorData = async (dispatch: AppDispatch, userId: string, dangerZones: DangerZone[], loc: any) => {
+  try {
+    console.log('[collectSensorData] Sensor data collection checking permissions.');
+    let { status } = await Location.getBackgroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Permission to access location was denied.');
+      return;
+    }
+
+    if (loc) {
+      console.log('[collectSensorData] Sensor data collection getting coords.');
+      const kmConv = 3.6;
+      const speedKMH = (loc?.coords?.speed || 0) * kmConv;
+      dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
+      dispatch(updateSpeed(speedKMH));
+      console.log('[collectSensorData] Save speed.');
+      const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
+      console.log('[collectSensorData] currentSpeedLimit: ', currentSpeedLimit);
+      dispatch(updateSpeedLimit(currentSpeedLimit));
+      console.log('[collectSensorData] Updated speed limit:', currentSpeedLimit);
+      if ((speedKMH > 0) && speedKMH > currentSpeedLimit) {
+        console.log('[collectSensorData] Sending speed violation: ', speedKMH, currentSpeedLimit);
+        const violationCode = 'SPEEDING'; 
+        const sev = detectSeverity(violationCode, speedKMH, currentSpeedLimit);
+        dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev }));
+      }
+
+      if (dangerZones.length > 0) {
+        dangerZones.forEach(async (dangerZone) => {
+          const userPoint = point([loc.coords.longitude, loc.coords.latitude]);
+          const coords = dangerZone.coordinates;
+          if (coords && (typeof coords === 'object' && Object.keys(coords).length > 0)) {
+            const polygon = dangerZone.coordinates.features[0].geometry;
+            if (booleanPointInPolygon(userPoint, polygon)) {
+              const violationCode = 'GEOFENCE_VIOLATION';
+              const sev = detectSeverity(violationCode, speedKMH || 0);
+              console.log('[collectSensorData] Sending Geofence violation: ', violationCode);
+              dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev }));
+            }
+          }
+        });
+      }
+
+      if (loc.coords.speed !== null) {
+        const driverData = {
+          speed: loc.coords.speed || 0,
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+          timestamp: new Date().toISOString(),
+          user_id: userId,
+          activity: detectActivity(loc.coords.speed || 0)
+        };
+
+        sendDriverData(driverData);
+      }
+    }
+  } catch (error) {
+    console.error('Error collecting sensor data:', error);
+  }
 };
 
 const SensorDataCollector = () => {
@@ -171,12 +162,42 @@ const SensorDataCollector = () => {
   const [acceleration, setAcceleration] = useState(0);
   const dispatch: AppDispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.auth.userId);
-
   const [dangerZones, setDangerZones] = useState<DangerZone[]>([]);
   const [isViolationModalVisible, setViolationModalVisible] = useState(false);
   const [violationTimer, setViolationTimer] = useState(10);
+  const [isViolationTimerRunning, setIsViolationTimerRunning] = useState(false);
+  const [lastViolation, setLastViolation] = useState<{code: string; label: string; timestamp: number} | null>(null);
+  const [acknowledgeViolation, setAcknowledgeViolation] = useState(false);
+
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [status, setStatus] = useState<BackgroundFetch.BackgroundFetchStatus | null>(null);
+  const [locationStarted, setLocationStarted] = useState(false);
+  const [appState, setAppState] = useState(AppState.currentState);
+  const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
+
+  const checkStatusAsync = async () => {
+    const statusBackground = await BackgroundFetch.getStatusAsync();
+    console.log('Checking background status: ', statusBackground);
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+    console.log('Checking background register: ', isRegistered);
+    setStatus(statusBackground);
+    setIsRegistered(isRegistered);
+    console.log('Status: ', BackgroundFetch.BackgroundFetchStatus[statusBackground || 0]);
+  };
+
+  const toggleFetchTask = async () => {
+    await checkStatusAsync();
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await toggleFetchTask();
+    };
   
-  const fetchDangerZones = async () => {
+    fetchData();
+  }, []);
+
+  const fetchDangerZones = useCallback(async () => {
     if (!userId) return;
     const { data, error } = await supabase
       .from('danger_zones')
@@ -189,31 +210,30 @@ const SensorDataCollector = () => {
       setDangerZones(data || []);
       dispatch(updateAlertZones(data || []));
     }
-  };
+  }, [dispatch, userId]);
 
   const resetViolationState = () => {
     setViolationModalVisible(false);
     setViolationTimer(10);
-    isViolationTimerRunning = false
+    setIsViolationTimerRunning(false);
   };
 
   const handleViolation = (code: string, label: string) => {
-    // console.log('aqui open: ', isViolationTimerRunning, lastViolation);
     if (isViolationTimerRunning) {
       return; // Ignore violations if timer is running
     }
 
-    if (lastViolation?.timestamp){
-      const fiveMinutesInMilliseconds = 2 * 60 * 1000; // 2 minutes in milliseconds
+    if (lastViolation?.timestamp) {
+      const twoMinutesInMilliseconds = 2 * 60 * 1000;
       const currentTime = Date.now();
       const timeDifference = currentTime - lastViolation.timestamp;
-      // console.log('timeDifference: ', timeDifference, fiveMinutesInMilliseconds);
-      if (timeDifference < fiveMinutesInMilliseconds){
-        return; // Ingore violations if the same has been added 5 mins ago
+      if (timeDifference < twoMinutesInMilliseconds) {
+        return; // Ignore violations if the same has been added 2 mins ago
       }
     }
+    
     setViolationModalVisible(true);
-    isViolationTimerRunning = true;
+    setIsViolationTimerRunning(true);
 
     let timerId: NodeJS.Timeout;
 
@@ -223,14 +243,13 @@ const SensorDataCollector = () => {
           return prevTimer - 1;
         } else {
           if (userId && code) {
-            // console.log(t('sensorDataCollector.dispatchingViolation'), userId, code);
-            lastViolation = {
+            setLastViolation({
               code: code,
               label: label,
               timestamp: Date.now()
-            } 
-            const sev = detectSeverity(code, speed)
-            if (!acknowledgeViolation){
+            });
+            const sev = detectSeverity(code, speed);
+            if (!acknowledgeViolation) {
               dispatch(addViolationToSupabase({ userId: userId, violationCode: code, severity: sev }));
             }
           }
@@ -248,86 +267,248 @@ const SensorDataCollector = () => {
 
   const handleAcknowledgeViolation = () => {
     resetViolationState();
-    lastViolation = {
+    setLastViolation({
       code: 'ACKNOWLEDGE',
       label: 'ACKNOWLEDGE',
       timestamp: Date.now()
+    });
+  };
+
+  const startBackgroundTracking = async () => {
+    try {
+      console.log('Starting background tracking');
+      
+      // First check if background tracking is already running
+      const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK).catch(() => false);
+      if (isRunning) {
+        console.log('Background tracking is already running');
+        setLocationStarted(true);
+        return;
+      }
+      
+      await Location.startLocationUpdatesAsync(BACKGROUND_FETCH_TASK, {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 5000, 
+        distanceInterval: 10,
+        foregroundService: {
+          notificationTitle: "Location Tracking",
+          notificationBody: "Tracking your driving activity"
+        },
+        // This ensures it keeps running in background
+        deferredUpdatesInterval: 5000,
+        deferredUpdatesDistance: 50
+      });
+      
+      const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK);
+      setLocationStarted(hasStarted);
+      console.log('Background tracking started:', hasStarted);
+    } catch (error) {
+      console.error('Error starting background tracking:', error);
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log(t('sensorDataCollector.permissionDenied'));
-        return;
+  const stopBackgroundTracking = async () => {
+    try {
+      console.log('Stopping background tracking');
+      if (await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK)) {
+        await Location.stopLocationUpdatesAsync(BACKGROUND_FETCH_TASK);
+        setLocationStarted(false);
+        console.log('Background tracking stopped');
       }
+    } catch (error) {
+      console.error('Error stopping background tracking:', error);
+    }
+  };
 
-      if (!userId) {
-        console.log('No user');
-        return;
-      }
-
-      await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 10 },
-        async (loc) => {
-          if (loc) {
-            setLocation({
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude,
-            });
-
-            const kmConv = 3.6;
-            const speedKMH = (loc?.coords?.speed || 0) * kmConv;
-            setSpeed(speedKMH);
-            dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
-            dispatch(updateSpeed(speedKMH));
-
-            const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
-            dispatch(updateSpeedLimit(currentSpeedLimit));
-            console.log('check speed: ', speedKMH, currentSpeedLimit);
-            if ((speedKMH !== null || speedKMH !== 0) && speedKMH > currentSpeedLimit) {
-              console.log('sending speed violation: ', speedKMH, currentSpeedLimit);
-              const violationCode = 'SPEEDING';
-              handleViolation(violationCode, violationCode);
-            }
-
-            {
-              dangerZones.length > 0 && dangerZones.forEach(dangerZone => {
-                const userPoint = point([loc.coords.longitude, loc.coords.latitude]);
-                const coords = dangerZone.coordinates;
-                // console.log('label: ', dangerZone.label);
-                if (coords && (typeof coords === 'object' && Object.keys(coords).length > 0)) {
-                  const polygon = dangerZone.coordinates.features[0].geometry;
-                  if (booleanPointInPolygon(userPoint, polygon)) {
-                    const violationCode = 'GEOFENCE_VIOLATION';
-                    handleViolation(violationCode, dangerZone.label);
-                  }
-                }
-              });
-            }
-
-            if (loc.coords.speed) {
-              const driverData = {
-                speed: loc.coords.speed || 0,
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-                timestamp: new Date().toISOString(),
-                user_id: userId,
-                activity: await detectActivity(loc.coords.speed || 0)
-              };
+  const throttledLocationUpdate = throttle(async (loc) => {
+    if (!loc) return;
+    
+    // Update basic location info immediately
+    dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
+    const currentSpeed = (loc?.coords?.speed || 0) * 3.6;
+    dispatch(updateSpeed(currentSpeed));
+    setSpeed(currentSpeed);
+    
+    // Process geofences if needed
+    checkGeofences(loc);
+    
+    // Send basic driver data without waiting
+    const driverData = {
+      speed: loc.coords.speed || 0,
+      latitude: loc.coords.latitude,
+      longitude: loc.coords.longitude,
+      timestamp: new Date().toISOString(),
+      user_id: userId,
+      activity: detectActivity(loc.coords.speed || 0)
+    };
+    
+    // Don't await this - let it run in the background
+    sendDriverData(driverData);
+    
+    // Queue up the speed limit check (runs less frequently)
+    debouncedSpeedLimitCheck(loc, currentSpeed);
+  }, 1000); // Limit to once per second maximum
   
-              sendDriverData(driverData);
-            }
+  // Create a debounced version of the speed limit API call
+  const debouncedSpeedLimitCheck = debounce(async (loc, currentSpeed) => {
+    try {
+      const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
+      dispatch(updateSpeedLimit(currentSpeedLimit));
+      
+      // Check for speed violation
+      if (currentSpeed > 0 && currentSpeed > currentSpeedLimit) {
+        console.log('Speed violation detected:', currentSpeed, currentSpeedLimit);
+        const violationCode = 'SPEEDING';
+        if (!acknowledgeViolation) {
+          handleViolation(violationCode, violationCode);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking speed limit:', error);
+    }
+  }, 5000); // Only check speed limit every 5 seconds
+  
+  // Function to check geofences
+  const checkGeofences = (loc) => {
+    if (dangerZones.length === 0) return;
+    
+    const userPoint = point([loc.coords.longitude, loc.coords.latitude]);
+    
+    for (const dangerZone of dangerZones) {
+      const coords = dangerZone.coordinates;
+      if (!coords || typeof coords !== 'object' || Object.keys(coords).length === 0) continue;
+      
+      try {
+        const polygon = dangerZone.coordinates.features[0].geometry;
+        if (booleanPointInPolygon(userPoint, polygon)) {
+          const violationCode = 'GEOFENCE_VIOLATION';
+          if (!acknowledgeViolation) {
+            handleViolation(violationCode, dangerZone.label);
           }
+          break; // Exit after finding first match to reduce processing
+        }
+      } catch (error) {
+        console.error('Error checking geofence:', error);
+      }
+    }
+  };
+
+  const startForegroundTracking = async () => {
+    console.log('Starting foreground tracking');
+    
+    // Stop any ongoing subscription first
+    if (locationSubscription) {
+      locationSubscription.remove();
+      setLocationSubscription(null);
+    }
+    
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.log(t('sensorDataCollector.permissionDenied'));
+      return;
+    }
+
+    if (!userId) {
+      console.log('No user ID available');
+      return;
+    }
+
+    try {
+      const subscription = await Location.watchPositionAsync(
+        { 
+          accuracy: Location.Accuracy.BestForNavigation, 
+          timeInterval: 5000, // 5 seconds between updates 
+          distanceInterval: 10 
         },
-        (error) => {
-          console.log('Error watching position: ', error);
+        (loc) => {
+          // Use throttled handler instead of doing everything inline
+          throttledLocationUpdate(loc);
         }
       );
-    })();
-  }, [dispatch, dangerZones, userId]);
+      
+      setLocationSubscription(subscription);
+      console.log('Foreground tracking started');
+    } catch (error) {
+      console.log('Error starting foreground tracking:', error);
+    }
+  };
 
+  const stopForegroundTracking = () => {
+    console.log('Stopping foreground tracking');
+    if (locationSubscription) {
+      locationSubscription.remove();
+      setLocationSubscription(null);
+      console.log('Foreground tracking stopped');
+    }
+  };
+
+  // Handle app state changes (foreground/background)
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      console.log('App state changed from', appState, 'to', nextAppState);
+      
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to the foreground
+        console.log('App has come to the foreground');
+        await stopBackgroundTracking();
+        await startForegroundTracking();
+      } else if (appState === 'active' && nextAppState.match(/inactive|background/)) {
+        // App has gone to the background
+        console.log('App has gone to the background');
+        stopForegroundTracking();
+        await startBackgroundTracking();
+      }
+      
+      setAppState(nextAppState);
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState, locationSubscription]);
+
+  // Initial setup on component mount
+  useEffect(() => {
+    const setupLocationTracking = async () => {
+      try {
+        // Request permissions
+        let forePermission = await Location.requestForegroundPermissionsAsync();
+        let backPermission = await Location.requestBackgroundPermissionsAsync();
+        
+        if (forePermission.status !== 'granted' && backPermission.status !== 'granted') {
+          console.log('Permission to access location was denied');
+          return;
+        }
+        
+        console.log('Permission to access location granted');
+        
+        // Determine initial tracking mode based on app state
+        if (AppState.currentState === 'active') {
+          console.log('App is active, starting foreground tracking');
+          await startForegroundTracking();
+        } else {
+          console.log('App is in background, starting background tracking');
+          await startBackgroundTracking();
+        }
+      } catch (error) {
+        console.error('Error in setupLocationTracking:', error);
+      }
+    };
+
+    setupLocationTracking();
+    
+    // Cleanup on component unmount
+    return () => {
+      stopForegroundTracking();
+      (async () => {
+        await stopBackgroundTracking();
+      })();
+    };
+  }, []);
+
+  // Accelerometer setup
   useEffect(() => {
     Accelerometer.setUpdateInterval(200);
     const subscription = Accelerometer.addListener((data) => {
@@ -337,11 +518,12 @@ const SensorDataCollector = () => {
     });
 
     return () => subscription.remove();
-  }, [dispatch, userId]);
+  }, [dispatch]);
 
-  useEffect(()=>{
+  // Fetch danger zones when userId changes
+  useEffect(() => {
     fetchDangerZones();
-  }, [userId])
+  }, [fetchDangerZones, userId]);
 
   return (
     <Modal isVisible={isViolationModalVisible}>
