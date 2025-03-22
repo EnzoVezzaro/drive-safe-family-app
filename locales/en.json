@@ -37,6 +37,9 @@
     "reaction": "Reaction ",
     "smoothness": "Smoothness ",
     "wariness": "Wariness ",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
     "progress": "Progress",
     "seeDetails": "See details",
     "familyDashboard": "See your family's dashboard"
@@ -85,5 +88,14 @@
     "recommendations": "Personal recommendations",
     "speedLimitRecommendation": "Don't forget to follow speed limits in cities.",
     "crosswalkRecommendation": "Be careful near crosswalks. Remember to give way."
+  },
+  "dayNames": {
+    "sun": "S",
+    "mon": "M",
+    "tue": "T",
+    "wed": "W",
+    "thu": "T",
+    "fri": "F",
+    "sat": "S"
   }
 }

@@ -94,6 +94,9 @@
     "reaction": "Reacción ",
     "smoothness": "Suavidad ",
     "wariness": "Precaución ",
+    "high": "Alto",
+    "medium": "Medio",
+    "low": "Bajo",
     "progress": "Progreso",
     "seeDetails": "Ver detalles",
     "familyDashboard": "Mira la dashboard de tu familia"
@@ -128,5 +131,14 @@
     "recommendations": "Recomendaciones personales",
     "speedLimitRecommendation": "No olvides seguir los límites de velocidad en las ciudades.",
     "crosswalkRecommendation": "Ten cuidado cerca de los pasos de peatones. Recuerda ceder el paso."
+  },
+  "dayNames": {
+    "sun": "D",
+    "mon": "L",
+    "tue": "M",
+    "wed": "X",
+    "thu": "J",
+    "fri": "V",
+    "sat": "S"
   }
 }
