@@ -68,6 +68,14 @@
     "noViolations": "No violations found",
     "recentViolations": "Recent Violations"
   },
+  "violation": {
+    "RED_LIGHT": "Red Light",
+    "SPEEDING": "Speeding",
+    "PARKING": "Parking",
+    "CROSSWALK": "Crosswalk",
+    "GEOFENCE_VIOLATION": "Geofence",
+    "UNKNOWN": "Unknown"
+  },
   "profile": {
     "fetchError": "Error fetching user data:",
     "loading": "Loading profile...",

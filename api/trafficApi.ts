@@ -48,7 +48,8 @@ export async function getDriverDataAndViolations(userId: string): Promise<{ driv
       .from('driving_data')
       .select('*')
       .eq('user_id', userId)
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: true })
+      .limit(50);
 
     if (drivingError) {
       console.error('Error fetching driving data:', drivingError);
@@ -60,7 +61,8 @@ export async function getDriverDataAndViolations(userId: string): Promise<{ driv
       .from('violations')
       .select('*')
       .eq('user_id', userId)
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: true })
+      .limit(50);
 
     if (violationError) {
       console.error('Error fetching violation data:', violationError);

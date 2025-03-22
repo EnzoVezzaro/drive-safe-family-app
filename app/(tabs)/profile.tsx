@@ -9,6 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import * as Violations from '../../lib/violations';
 import { useTranslation } from 'react-i18next';
+import Loading from '../../components/Loading';
 
 interface ViolationPercentage {
   type: string;
@@ -20,6 +21,7 @@ const Profile = () => {
   const userId = useSelector((state: RootState) => state.auth.userId);
   const role = useSelector((state: RootState) => state.auth.role);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [violationData, setViolationData] = useState<ViolationPercentage[] | null>(null);
   const [violations, setViolations] = useState<any[] | null>(null);
 
@@ -33,11 +35,13 @@ const Profile = () => {
   }, [t]);
 
   const fetchViolationData = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('violations')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .limit(50);
 
         console.log('viol: ', userId);
         
@@ -69,6 +73,8 @@ const Profile = () => {
       }
     } catch (error) {
       console.error(t('profile.fetchError'), error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,15 +83,6 @@ const Profile = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
     Linking.openURL(url);
   };
-
-  // If violationData is null, show a loading screen
-  if (!violationData) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text>{t('profile.loading')}</Text>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -96,85 +93,91 @@ const Profile = () => {
         }
       >
         <View style={styles.contentContainer}>
-          {/* Main Title */}
-          <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              {/* Main Title */}
+              <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
 
-          {/* Violations per 100 mile section */}
-          <Text style={styles.sectionTitle}>{t('profile.totalViolations')} {violations?.length || 0}</Text>
+              {/* Violations per 100 mile section */}
+              <Text style={styles.sectionTitle}>{t('profile.totalViolations')} {violations?.length || 0}</Text>
 
-          {/* Display violations */}
-          {violationData && violationData.map((violation, index) => (
-            <View key={index} style={styles.violationItem}>
-              <View style={styles.violationHeader}>
-                <Text style={styles.violationType}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
-                <Text style={styles.violationCount}>{violation.percentage.toFixed(1)}%</Text>
-              </View>
-              <View style={styles.progressBarContainer}>
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      backgroundColor: Violations.ViolationColors(violation.type),
-                      width: `${violation.percentage}%`,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          ))}
-
-          {/* Traffic violations section */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllLink}>{t('profile.seeAll')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Image carousel */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-            {violations && violations.map((violation, index) => (
-              <TouchableOpacity key={index} style={styles.violationCard} onPress={() => openMap(violation.location)}>
-                <Image
-                  source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
-                  style={styles.violationImage}
-                />
-                <View style={styles.violationCardContent}>
-                  <Text style={styles.violationCardTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
-                  <Text style={styles.violationCardDetails}>{violation.timestamp}</Text>
+              {/* Display violations */}
+              {violationData && violationData.map((violation, index) => (
+                <View key={index} style={styles.violationItem}>
+                  <View style={styles.violationHeader}>
+                    <Text style={styles.violationType}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
+                    <Text style={styles.violationCount}>{violation.percentage.toFixed(1)}%</Text>
+                  </View>
+                  <View style={styles.progressBarContainer}>
+                    <View
+                      style={[
+                        styles.progressBar,
+                        {
+                          backgroundColor: Violations.ViolationColors(violation.type),
+                          width: `${violation.percentage}%`,
+                        },
+                      ]}
+                    />
+                  </View>
                 </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+              ))}
 
-          {/* Personal recommendations */}
-          <Text style={styles.mainTitle}>{t('profile.recommendations')}</Text>
+              {/* Traffic violations section */}
+              <View style={styles.sectionHeader}>
+                <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAllLink}>{t('profile.seeAll')}</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Speed limit recommendation */}
-          <View style={styles.recommendationItem}>
-            <View style={[styles.recommendationIcon, { backgroundColor: '#3F51B5' }]}>
-              <MaterialCommunityIcons name="speedometer" size={24} color="white" />
-            </View>
-            <Text style={styles.recommendationText}>
-              {t('profile.speedLimitRecommendation')}
-            </Text>
-          </View>
+              {/* Image carousel */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
+                {violations && violations.map((violation, index) => (
+                  <TouchableOpacity key={index} style={styles.violationCard} onPress={() => openMap(violation.location)}>
+                    <Image
+                      source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
+                    style={styles.violationImage}
+                    />
+                    <View style={styles.violationCardContent}>
+                      <Text style={styles.violationCardTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
+                      <Text style={styles.violationCardDetails}>{violation.timestamp}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
-          {/* Crosswalk recommendation */}
-          <View style={styles.recommendationItem}>
-            <View style={[styles.recommendationIcon, { backgroundColor: '#4DB6AC' }]}>
-              <MaterialCommunityIcons name="walk" size={24} color="white" />
-            </View>
-            <Text style={styles.recommendationText}>
-              {t('profile.crosswalkRecommendation')}
-            </Text>
-          </View>
+              {/* Personal recommendations */}
+              <Text style={styles.mainTitle}>{t('profile.recommendations')}</Text>
 
-          {/* User info kept from original code but hidden */}
-          <View style={styles.hiddenUserInfo}>
-            <Text>User ID: {userId}</Text>
-            <Text>Role: {role}</Text>
-          </View>
+              {/* Speed limit recommendation */}
+              <View style={styles.recommendationItem}>
+                <View style={[styles.recommendationIcon, { backgroundColor: '#3F51B5' }]}>
+                  <MaterialCommunityIcons name="speedometer" size={24} color="white" />
+                </View>
+                <Text style={styles.recommendationText}>
+                  {t('profile.speedLimitRecommendation')}
+                </Text>
+              </View>
+
+              {/* Crosswalk recommendation */}
+              <View style={styles.recommendationItem}>
+                <View style={[styles.recommendationIcon, { backgroundColor: '#4DB6AC' }]}>
+                  <MaterialCommunityIcons name="walk" size={24} color="white" />
+                </View>
+                <Text style={styles.recommendationText}>
+                  {t('profile.crosswalkRecommendation')}
+                </Text>
+              </View>
+
+              {/* User info kept from original code but hidden */}
+              <View style={styles.hiddenUserInfo}>
+                <Text>User ID: {userId}</Text>
+                <Text>Role: {role}</Text>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -7,30 +7,50 @@ import { getScores } from '../../lib/supabase';
 import { useAppSelector, useAuthSelector } from '../../hooks/useRedux';
 import * as Violations from '../../lib/violations';
 import { useTranslation } from 'react-i18next';
+import Loading from '../../components/Loading';
+import { supabase } from '../../lib/supabase';
 
 const Leaderboard = () => {
   const { t } = useTranslation();
   const [scores, setScores] = useState<any[] | null>(null);
   const [violations, setViolations] = useState<any[] | null>(null);
+  const [recentViolations, setRecentViolations] = useState<any[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { userId } = useAuthSelector();
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     async function fetchScores() {
+      setLoading(true);
       if (!userId) {
         console.error(t('leaderboard.noUserId'));
         setRefreshing(false);
+        setLoading(false);
         return;
       }
-      const fetchedData = await getScores(userId); 
-      // console.log('fetchedData: ', fetchedData);
-
-      if (fetchedData && Array.isArray(fetchedData) === false) {
-        setScores(fetchedData.scores);
-        setViolations(fetchedData.violations);
+      const familyScore = await getScores(userId);
+      if (familyScore && Array.isArray(familyScore) === true) {
+        setScores(familyScore);
+        setViolations(familyScore[0]?.violation_types_count || {});
       }
+
+      // Fetch recent violations
+      const { data: recentViolationsData, error: recentViolationsError } = await supabase
+        .from('violations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('timestamp', { ascending: false })
+        .limit(5);
+
+      if (recentViolationsError) {
+        console.error('Error fetching recent violations:', recentViolationsError);
+      } else {
+        setRecentViolations(recentViolationsData);
+      }
+
       setRefreshing(false);
+      setLoading(false);
     }
 
     fetchScores();
@@ -38,17 +58,33 @@ const Leaderboard = () => {
 
   useEffect(() => {
     async function fetchScores() {
+      setLoading(true);
       if (!userId) {
         console.error(t('leaderboard.noUserId'));
+        setLoading(false);
         return;
       }
-      const fetchedData = await getScores(userId);
-      // console.log('fetchedData: ', fetchedData);
-
-      if (fetchedData && Array.isArray(fetchedData) === false) {
-        setScores(fetchedData.scores);
-        setViolations(fetchedData.violations);
+      const familyScore = await getScores(userId);
+      if (familyScore && Array.isArray(familyScore) === true) {
+        setScores(familyScore);
+        setViolations(familyScore[0]?.violation_types_count || {});
       }
+
+      // Fetch recent violations
+      const { data: recentViolationsData, error: recentViolationsError } = await supabase
+        .from('violations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('timestamp', { ascending: false })
+        .limit(5);
+
+      if (recentViolationsError) {
+        console.error('Error fetching recent violations:', recentViolationsError);
+      } else {
+        setRecentViolations(recentViolationsData);
+      }
+
+      setLoading(false);
     }
 
     fetchScores();
@@ -61,75 +97,79 @@ const Leaderboard = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Gamified Dashboard Header */}
-        <View style={styles.dashboardHeader}>
-          <Text style={styles.dashboardTitle}>{t('leaderboard.familyChallenge')}</Text>
-          <Text style={styles.dashboardSubtitle}>{t('leaderboard.trackProgress')}</Text>
-        </View>
+        {loading ? (
+          <Loading />
+        ) : (
+          <View>
+            {/* Gamified Dashboard Header */}
+            <View style={styles.dashboardHeader}>
+              <Text style={styles.dashboardTitle}>{t('leaderboard.familyChallenge')}</Text>
+              <Text style={styles.dashboardSubtitle}>{t('leaderboard.trackProgress')}</Text>
+            </View>
 
-        {/* Family Leaderboard */}
-        <View style={styles.leaderboardSection}>
-          <Text style={styles.leaderboardTitle}>{t('leaderboard.familyLeaderboard')}</Text>
-          {scores && scores.length > 0 ? (
-            scores.map((score, index) => (
-              <View key={index} style={styles.leaderboardItem}>
-                <Text style={styles.leaderboardText}>{score.users.email.split('@')[0]}</Text>
-                <Text style={styles.leaderboardText}>{score.score} pts</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.leaderboardLoading}>{t('leaderboard.loading')}</Text>
-          )}
-        </View>
-
-          {/* Personal Driving Stats */}
-          <View style={styles.statsSection}>
-            <Text style={styles.statsTitle}>{t('leaderboard.yourStats')}</Text>
-
-          {/* Violations per type */}
-          <View style={styles.violationStats}>
-            <Text style={styles.violationStatsTitle}>{t('leaderboard.totalViolations')} {violations?.length || 0}</Text>
-            {violations && violations.length > 0 ? (
-              Object.entries(
-                violations.reduce((acc, violation) => {
-                  const type = violation.type || 'Unknown'; // Assuming each violation has a 'type' property
-                  acc[type] = (acc[type] || 0) + 1;
-                  return acc;
-                }, {})
-              ).map(([type, count]) => (
-                <View key={type} style={styles.violationItem}>
-                  <Text style={styles.violationText}>{t(Violations.ViolationLabels[type as keyof typeof Violations.ViolationLabels])}</Text>
-                  <Text style={styles.violationValue}>{String(count)}</Text>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.leaderboardLoading}>{t('leaderboard.noViolations')}</Text>
-            )}
-          </View>
-
-          {/* Recent Violations */}
-          <View style={styles.recentViolations}>
-            <Text style={styles.recentViolationsTitle}>{t('leaderboard.recentViolations')}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-              {violations && violations.length > 0 ? (
-                violations.map((violation, index) => (
-                  <View key={index} style={styles.violationDetails}>
-                    <Image
-                      source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
-                      style={styles.violationImage}
-                    />
-                    <View style={styles.violationInfo}>
-                      <Text style={styles.violationTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
-                      <Text style={styles.violationDescription}>{violation.timestamp}</Text>
-                    </View>
+            {/* Family Leaderboard */}
+            <View style={styles.leaderboardSection}>
+              <Text style={styles.leaderboardTitle}>{t('leaderboard.familyLeaderboard')}</Text>
+              {scores && scores.length > 0 ? (
+                scores.map((score, index) => (
+                  <View key={index} style={styles.leaderboardItem}>
+                    <Text style={styles.leaderboardText}>{score.email.split('@')[0]}</Text>
+                    <Text style={styles.leaderboardText}>{score.total_violations} violations</Text>
+                    <Text style={styles.leaderboardText}>{score.score} pts</Text>
                   </View>
                 ))
               ) : (
-                <Text style={styles.leaderboardLoading}>{t('leaderboard.noViolations')}</Text>
+                <Text style={styles.leaderboardLoading}>{t('leaderboard.loading')}</Text>
               )}
-            </ScrollView>
+            </View>
+
+            {/* Personal Driving Stats */}
+            <View style={styles.statsSection}>
+              <Text style={styles.statsTitle}>{t('leaderboard.yourStats')}</Text>
+
+              {/* Violations per type */}
+              <View style={styles.violationStats}>
+                <Text style={styles.violationStatsTitle}>{t('leaderboard.totalViolations')}</Text>
+                {violations && Object.keys(violations).length > 0 ? (
+                  Object.entries(violations).map(([type, violationData]) => (
+                    <View key={type} style={styles.violationItem}>
+                      <Text style={styles.violationText}>{t(Violations.ViolationLabels[type as keyof typeof Violations.ViolationLabels] || type)}</Text>
+                      <Text style={styles.violationValue}>{String(violationData.count)}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.leaderboardLoading}>{t('leaderboard.noViolations')}</Text>
+                )}
+              </View>
+
+              {/* Recent Violations */}
+              <View style={styles.recentViolations}>
+                <Text style={styles.recentViolationsTitle}>{t('leaderboard.recentViolations')}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
+                  {recentViolations && recentViolations.length > 0 ? (
+                    recentViolations.map((violation, index) => {
+                      const violationLabel = Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels] || violation.type;
+                      return (
+                        <View key={index} style={styles.violationDetails}>
+                          <Image
+                            source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
+                            style={styles.violationImage}
+                          />
+                          <View style={styles.violationInfo}>
+                            <Text style={styles.violationTitle}>{t(violationLabel)}</Text>
+                            <Text style={styles.violationDescription}>{violation.timestamp}</Text>
+                          </View>
+                        </View>
+                      );
+                    })
+                  ) : (
+                    <Text style={styles.leaderboardLoading}>{t('leaderboard.noViolations')}</Text>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
   );
 };

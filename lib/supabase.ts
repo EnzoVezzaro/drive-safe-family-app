@@ -75,7 +75,8 @@ export async function getDrivingStats(userId: string): Promise<{ totalTrips: num
   const { data, error } = await supabase
     .from('violations')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .limit(50);
 
   if (error) {
     console.error('Error fetching driving stats:', error);
@@ -98,54 +99,22 @@ export async function getScores(userId: string) {
     return null;
   }
 
-  // Fetch family members (users where id = current user id or parent = current user id)
-  const { data: familyMembers, error: familyError } = await supabase
-    .from('users')
-    .select('id, email')
-    .or(`id.eq.${userId},parent.eq.${userId}`);
+  // Call the PostgreSQL function get_scores with the userId as input
+  let { data, error } = await supabase
+    .rpc('get_scores', { input_user_id: userId })
 
-  if (familyError) {
-    console.error('Error fetching family members:', familyError);
+  if (error) {
+    console.error('Error fetching scores:', error);
     return null;
   }
 
-  if (!familyMembers || familyMembers.length === 0) {
-    console.log('No family members found for user:', userId);
-    return []; // Return empty array if no family members found
+  // The returned data will contain the scores for the family members
+  if (!data || data.length === 0) {
+    console.log('No scores found for user:', userId);
+    return []; // Return empty array if no scores found
   }
 
-  // Fetch violations for all family members
-  const familyMemberIds = familyMembers.map(member => member.id);
-  const { data: violations, error: violationsError } = await supabase
-    .from('violations')
-    .select('*')
-    .in('user_id', familyMemberIds);
-  // console.log('fetching violations family: ', violations);
-  
-  if (violationsError) {
-    console.error('Error fetching violations:', violationsError);
-    return null;
-  }
+  // console.log('[SCORE] data score: ', data);
 
-  // Calculate score for each family member (example: score = number of violations)
-  const familyScores = familyMembers.map(member => {
-    const memberViolations = violations ? violations.filter(violation => violation.user_id === member.id) : [];
-    const score = memberViolations.length; // Score is based on number of violations
-    return {
-      score: score,
-      user_id: member.id,
-      users: {
-        id: member.id,
-        email: member.email
-      }
-    };
-  });
-
-  // Sort family scores by score in descending order
-  familyScores.sort((a, b) => b.score - a.score);
-
-  return {
-    scores: familyScores,
-    violations: violations || []
-  };
+  return data;
 }

@@ -108,7 +108,8 @@ export const fetchDrivingData = createAsyncThunk(
       const { data: dangerZonesData, error: dangerZonesError } = await supabase
         .from('danger_zones')
         .select('*')
-        .eq('created_by', userId);
+        .eq('created_by', userId)
+        .eq('deleted', false);
 
       if (dangerZonesError) {
         console.error('Error fetching danger zones:', dangerZonesError);

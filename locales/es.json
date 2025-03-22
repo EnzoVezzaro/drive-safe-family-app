@@ -67,6 +67,14 @@
     "noViolations": "No se encontraron infracciones",
     "recentViolations": "Infracciones recientes"
   },
+  "violation": {
+    "RED_LIGHT": "Luz roja",
+    "SPEEDING": "Exceso de velocidad",
+    "PARKING": "Estacionamiento",
+    "CROSSWALK": "Paso de peatones",
+    "GEOFENCE_VIOLATION": "Geocerca",
+    "UNKNOWN": "Desconocida"
+  },
   "profile": {
     "fetchError": "Error al obtener los datos del usuario:",
     "loading": "Cargando perfil...",

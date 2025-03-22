@@ -202,7 +202,8 @@ const SensorDataCollector = () => {
     const { data, error } = await supabase
       .from('danger_zones')
       .select('*')
-      .eq('created_by', userId);
+      .eq('created_by', userId)
+      .eq('deleted', false);
 
     if (error) {
       console.error('Error fetching danger zones:', error);
@@ -443,6 +444,7 @@ const SensorDataCollector = () => {
   };
 
   // Handle app state changes (foreground/background)
+  /*
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       console.log('App state changed from', appState, 'to', nextAppState);
@@ -455,7 +457,7 @@ const SensorDataCollector = () => {
       } else if (appState === 'active' && nextAppState.match(/inactive|background/)) {
         // App has gone to the background
         console.log('App has gone to the background');
-        stopForegroundTracking();
+        await stopForegroundTracking();
         await startBackgroundTracking();
       }
       
@@ -468,6 +470,7 @@ const SensorDataCollector = () => {
       subscription.remove();
     };
   }, [appState, locationSubscription]);
+  */
 
   // Initial setup on component mount
   useEffect(() => {
