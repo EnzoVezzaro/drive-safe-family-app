@@ -11,6 +11,7 @@ import { supabase, getScores } from '../../lib/supabase';
 import * as Violations from '../../lib/violations';
 import { useTranslation } from 'react-i18next';
 import Loading from '../../components/Loading';
+import RecentViolations from '../../components/RecentViolations';
 
 interface ViolationPercentage {
   type: string;
@@ -91,20 +92,6 @@ const Profile = () => {
     }
   };
 
-  const getMapImageURL = (location: string) => {
-    const [latitude, longitude] = location.replace(/[()]/g, "").split(',').map(coord => parseFloat(coord.trim()));
-    console.log('getting map for coord: ', latitude, longitude, location);
-    const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
-    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/geojson({"type":"Point","coordinates":[${longitude},${latitude}]})/${longitude},${latitude},12/300x200?access_token=${accessToken}`;
-    return url;
-  };
-
-  const openMap = (location: string) => {
-    const [latitude, longitude] = location.split(',').map(parseFloat);
-    const url = `https://www.google.com/maps/?q=${latitude},${longitude}`;
-    Linking.openURL(url);
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -146,25 +133,7 @@ const Profile = () => {
               ))}
 
               {/* Traffic violations section */}
-              <View style={styles.sectionHeader}>
-                <Text style={styles.mainTitle}>{t('leaderboard.recentViolations')}</Text>
-              </View>
-
-              {/* Image carousel */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-                {violations && violations.map((violation: any, index: number) => (
-                  <TouchableOpacity key={index} style={styles.violationCard} onPress={() => openMap(violation.location)}>
-                    <Image
-                      style={styles.violationImage}
-                      source={{ uri: getMapImageURL(violation.location) }}
-                    />
-                    <View style={styles.violationCardContent}>
-                      <Text style={styles.violationCardTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
-                      <Text style={styles.violationCardDetails}>{new Date(violation.timestamp).toLocaleDateString()}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <RecentViolations violations={violations} />
 
               {/* Personal recommendations */}
               <Text style={styles.mainTitle}>{t('profile.recommendations')}</Text>
@@ -260,34 +229,6 @@ const styles = StyleSheet.create({
   seeAllLink: {
     color: '#3498DB',
     fontSize: 14,
-  },
-  carousel: {
-    flexDirection: 'row',
-    marginBottom: 24,
-  },
-  violationCard: {
-    width: 150,
-    marginRight: 12,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    overflow: 'hidden',
-    elevation: 2,
-  },
-  violationImage: {
-    width: '100%',
-    height: 100,
-  },
-  violationCardContent: {
-    padding: 8,
-  },
-  violationCardTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  violationCardDetails: {
-    fontSize: 12,
-    color: '#7F8C8D',
   },
   recommendationItem: {
     flexDirection: 'row',

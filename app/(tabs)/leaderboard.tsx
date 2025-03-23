@@ -9,6 +9,7 @@ import * as Violations from '../../lib/violations';
 import { useTranslation } from 'react-i18next';
 import Loading from '../../components/Loading';
 import { supabase } from '../../lib/supabase';
+import RecentViolations from '../../components/RecentViolations';
 
 type ViolationType = {
   count: number;
@@ -187,30 +188,7 @@ const Leaderboard = () => {
               </View>
 
               {/* Recent Violations */}
-              <View style={styles.recentViolations}>
-                <Text style={styles.recentViolationsTitle}>{t('leaderboard.recentViolations')}</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-                  {recentViolations && recentViolations.length > 0 ? (
-                    recentViolations.map((violation, index) => {
-                      const violationLabel = Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels] || violation.type;
-                      return (
-                        <View key={index} style={styles.violationDetails}>
-                          <Image
-                            source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
-                            style={styles.violationImage}
-                          />
-                          <View style={styles.violationInfo}>
-                            <Text style={styles.violationTitle}>{t(violationLabel)}</Text>
-                            <Text style={styles.violationDescription}>{violation.timestamp}</Text>
-                          </View>
-                        </View>
-                      );
-                    })
-                  ) : (
-                    <Text style={styles.leaderboardLoading}>{t('leaderboard.noViolations')}</Text>
-                  )}
-                </ScrollView>
-              </View>
+              <RecentViolations violations={recentViolations} />
             </View>
           </View>
         )}
