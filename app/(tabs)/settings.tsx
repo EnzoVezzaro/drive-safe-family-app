@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Platform, Linking, Alert } from 'react-native';
 import { Text, Switch } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from 'react-native';
+import { Button, Pressable } from 'react-native';
 import i18n from '../../i18n';
 import { useTranslation } from 'react-i18next';
 import * as Localization from 'expo-localization';
@@ -164,7 +164,11 @@ const Settings = () => {
           </TouchableOpacity>
         </View>
 
-        <Button title="Sign Out" onPress={handleSignOut} />
+        <View style={styles.settingLogout}>
+          <TouchableOpacity onPress={handleSignOut} style={styles.button}>
+            <Text style={styles.text}>Sign Out</Text>
+          </TouchableOpacity>
+        </View>
 
         <Modal
           animationType="fade"
@@ -262,11 +266,25 @@ const styles = StyleSheet.create({
     width: '80%',
   },
   button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-    width: 150,
-    marginVertical: 5,
+    backgroundColor: '#FF3B30', // Nice red shade
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5, // For Android shadow
+    alignItems: 'center',
+  },
+  text: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  settingLogout: {
+    marginTop: 20,
+    alignItems: 'flex-end',
   },
   buttonOpen: {
     backgroundColor: "#F194FF",

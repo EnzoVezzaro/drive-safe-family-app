@@ -402,7 +402,7 @@ export default function HomeScreen() {
                       labels: violationChartData.labels,
                       datasets: violationChartData.datasets,
                     }}
-                    width={screenWidth - 80}
+                    width={screenWidth-65}
                     height={220}
                     yAxisLabel=""
                     yAxisSuffix=""
@@ -422,7 +422,8 @@ export default function HomeScreen() {
                       },
                     }}
                     style={{
-                      borderRadius: 16
+                      borderRadius: 16,
+                      paddingRight:0
                     }}
                   />
                 ) : (
