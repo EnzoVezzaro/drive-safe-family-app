@@ -102,8 +102,8 @@ export const collectSensorData = async (dispatch: AppDispatch, userId: string, d
 
     if (loc) {
       console.log('[collectSensorData] Sensor data collection getting coords.');
-      const kmConv = 3.6;
-      const speedKMH = (loc?.coords?.speed || 0) * kmConv;
+      console.log('[collectSensorData] Sensor data collection SPEED: ', loc?.coords?.speed);
+      const speedKMH = loc?.coords?.speed || 0;
       dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
       dispatch(updateSpeed(speedKMH));
       console.log('[collectSensorData] Save speed.');
@@ -334,7 +334,7 @@ const SensorDataCollector = () => {
     
     // Update basic location info immediately
     dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
-    const currentSpeed = (loc?.coords?.speed || 0) * 3.6;
+    const currentSpeed = loc?.coords?.speed || 0;
     dispatch(updateSpeed(currentSpeed));
     setSpeed(currentSpeed);
     

@@ -42,7 +42,7 @@ export const addViolationToSupabase = createAsyncThunk(
     const { latitude, longitude } = state.driving.location;
 
     try {
-      console.log('addViolationToSupabase inserting:', { user_id: userId, type: violationCode, location: `${latitude},${longitude}`, severity: severity });
+      console.log('addViolationToSupabase inserting:', { user_id: userId, type: violationCode, location: `${latitude},${longitude}`, speed: state.driving.speed, speedLimit: state.driving.speedLimit, severity: severity });
       const { data, error } = await supabase
         .from('violations')
         .insert([{ 
