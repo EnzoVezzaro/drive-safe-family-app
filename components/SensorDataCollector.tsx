@@ -289,8 +289,7 @@ const SensorDataCollector = () => {
       
       await Location.startLocationUpdatesAsync(BACKGROUND_FETCH_TASK, {
         accuracy: Location.Accuracy.BestForNavigation,
-        timeInterval: 5000, 
-        distanceInterval: 10,
+        distanceInterval: 50,
         foregroundService: {
           notificationTitle: "Location Tracking",
           notificationBody: "Tracking your driving activity"
@@ -418,8 +417,7 @@ const SensorDataCollector = () => {
       const subscription = await Location.watchPositionAsync(
         { 
           accuracy: Location.Accuracy.BestForNavigation, 
-          timeInterval: 5000, // 5 seconds between updates 
-          distanceInterval: 10 
+          distanceInterval: 50 
         },
         (loc) => {
           // Use throttled handler instead of doing everything inline
@@ -444,7 +442,6 @@ const SensorDataCollector = () => {
   };
 
   // Handle app state changes (foreground/background)
-  /*
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       console.log('App state changed from', appState, 'to', nextAppState);
@@ -470,7 +467,6 @@ const SensorDataCollector = () => {
       subscription.remove();
     };
   }, [appState, locationSubscription]);
-  */
 
   // Initial setup on component mount
   useEffect(() => {

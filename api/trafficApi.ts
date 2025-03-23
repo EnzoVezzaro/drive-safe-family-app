@@ -1,6 +1,30 @@
 import { supabase } from '../lib/supabase';
 import axios from 'axios';
 
+interface SpeedLimitCache {
+  [key: string]: number;
+  latitude: number;
+  longitude: number;
+}
+
+const SPEED_LIMIT_CACHE: { [key: string]: SpeedLimitCache } = {};
+
+const haversine = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = lat1 * Math.PI / 180; // lat1 in radians
+  const φ2 = lat2 * Math.PI / 180; // lat2 in radians
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  const distance = R * c;
+  return distance;
+};
+
 export async function getSpeedLimit(latitude: number, longitude: number): Promise<number> {
   const accessToken = process.env.EXPO_PUBLIC_TOMTOM_API_KEY;
 
@@ -142,10 +166,24 @@ export async function getDriverDataAndViolations(userId: string): Promise<{ driv
 
 export async function getSpeedLimitMapbox(latitude: number, longitude: number): Promise<number> {
   const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
-  
+
   if (!accessToken) {
     console.error('Mapbox API key is missing.');
     return 55; // Default speed limit
+  }
+
+  const cacheKey = `${latitude},${longitude}`;
+  if (SPEED_LIMIT_CACHE[cacheKey]) {
+    const cachedData = SPEED_LIMIT_CACHE[cacheKey];
+    const distance = haversine(latitude, longitude, cachedData.latitude, cachedData.longitude);
+    console.log('Distance from cached location:', distance);
+    // 50 meters
+    if (distance <= 50) {
+      console.log('Using cached speed limit');
+      return cachedData.key;
+    } else {
+      console.log('Location has changed significantly, fetching new speed limit');
+    }
   }
 
   // Using coordinates dynamically
@@ -154,14 +192,14 @@ export async function getSpeedLimitMapbox(latitude: number, longitude: number): 
   try {
     console.log('Fetching speed limit data from Mapbox:', url);
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       console.warn('Failed to fetch speed limit from Mapbox.');
       return 55; // Default speed limit
     }
 
     const data = await response.json();
-    
+
     if (!data.routes || data.routes.length === 0) {
       console.warn('No route data found.');
       return 55;
@@ -170,15 +208,18 @@ export async function getSpeedLimitMapbox(latitude: number, longitude: number): 
     // Extract speed limit (if available)
     const maxspeedArray = data.routes[0]?.legs[0]?.annotation?.maxspeed ?? [];
 
+    let speedLimit = 55;
     for (const speedData of maxspeedArray) {
       if (speedData?.speed && speedData.speed !== "unknown") {
+        speedLimit = speedData.speed;
         console.log(`Speed Limit Found: ${speedData.speed} km/h`);
-        return speedData.speed;
+        break;
       }
     }
 
-    console.warn('No valid speed limit found.');
-    return 55; // Default speed limit if none found
+    SPEED_LIMIT_CACHE[cacheKey] = { key: speedLimit, latitude: latitude, longitude: longitude };
+    console.log('Updated speed limit cache');
+    return speedLimit;
   } catch (error) {
     console.error('Error fetching speed limit:', error);
     return 55; // Default speed limit in case of error
