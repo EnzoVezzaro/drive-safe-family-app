@@ -15,12 +15,17 @@ interface DrivingState {
   locationTrackingEnabled: boolean;
 }
 
+export const DEFAULT_LOCATION = {
+  latitude: 18.472789, // DEFAULT: Catedral Primada de América, Santo Domingo, Dominican Republic
+  longitude: -69.883867,
+};
+
 const initialState: DrivingState = {
   speed: 0,
   acceleration: 0,
   location: {
-    latitude: 18.472789, // DEFAULT: Catedral Primada de América, Santo Domingo, Dominican Republic
-    longitude: -69.883867,
+    latitude: DEFAULT_LOCATION.latitude,
+    longitude: DEFAULT_LOCATION.longitude,
   },
   violations: [],
   drivingScore: 100,

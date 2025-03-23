@@ -124,6 +124,7 @@ export default function HomeScreen() {
       return;
     }
     const myScore = await getScores(userId);
+    // console.log('myScore: ', JSON.stringify(myScore));
     if (myScore && Array.isArray(myScore) === true) {
       setScores(myScore);
       setViolations(myScore[0]?.violation_types_count || {});
@@ -175,7 +176,7 @@ export default function HomeScreen() {
       .select('*')
       .eq('user_id', userId)
       .gte('timestamp', sevenDaysAgo.toISOString())
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: false });
 
     if (recentViolationsError) {
       console.error('Error fetching recentViolations:', recentViolationsError);
@@ -184,6 +185,7 @@ export default function HomeScreen() {
       // Process recent violations to create chart data
       if (recentViolationsData) {
         const processedData = processViolationsForChart(recentViolationsData);
+        console.log('processedData: ', JSON.stringify(processedData));
         setViolationChartData(processedData);
       }
     }
@@ -196,59 +198,59 @@ export default function HomeScreen() {
     const labels: string[] = [];
     const today = new Date();
     const dayNames = [t('dayNames.sun'), t('dayNames.mon'), t('dayNames.tue'), t('dayNames.wed'), t('dayNames.thu'), t('dayNames.fri'), t('dayNames.sat')];
-
-    // Generate labels for the last 7 days
+  
+    // Generate labels and initialize counts for the last 7 days
+    const last7Days: string[] = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      labels.push(dayNames[date.getDay()].charAt(0));
+      const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      labels.push(dayNames[date.getDay()].charAt(0)); // Use only the first character for the chart label
+      last7Days.push(dateKey);
+      violationCounts[dateKey] = {}; // Ensure every date exists in the structure
     }
-
+  
     // Process violations to count by date and type
     violations.forEach((violation: any) => {
-      const date = new Date(violation.timestamp).toLocaleDateString();
-      if (!violationCounts[date]) {
-        violationCounts[date] = {};
+      const dateKey = new Date(violation.timestamp).toISOString().split('T')[0]; // Normalize date format
+      if (last7Days.includes(dateKey)) { // Only include last 7 days
+        if (!violationCounts[dateKey][violation.type]) {
+          violationCounts[dateKey][violation.type] = 0;
+        }
+        violationCounts[dateKey][violation.type]++;
       }
-      if (!violationCounts[date][violation.type]) {
-        violationCounts[date][violation.type] = 0;
-      }
-      violationCounts[date][violation.type]++;
     });
-
-    const datasets = Object.keys(
-      violations.reduce((types: any, v: any) => {
-        types[v.type] = true;
-        return types;
-      }, {})
-    ).map(type => {
-      const data = labels.map((label, index) => {
-        let day = new Date(today);
-        day.setDate(today.getDate() - (6 - index));
-        const violationDate = day.toLocaleDateString();
-        return violationCounts[violationDate]?.[type] || 0;
-      });
-
-      let color = (opacity = 1) => `rgba(128, 128, 128, ${opacity})`; // Gray
-      switch (type) {
-        case 'SPEEDING': color = (opacity = 1) => `rgba(255, 0, 0, ${opacity})`; break;
-        case 'GEOFENCE_VIOLATION': color = (opacity = 1) => `rgba(0, 255, 0, ${opacity})`; break;
-        case 'HARD_ACCELERATION': color = (opacity = 1) => `rgba(0, 0, 255, ${opacity})`; break;
-        case 'HARD_BRAKING': color = (opacity = 1) => `rgba(255, 255, 0, ${opacity})`; break;
-      }
+  
+    // Get unique violation types
+    const violationTypes = [...new Set(violations.map(v => v.type))];
+  
+    const datasets = violationTypes.map(type => {
+      const data = last7Days.map(date => violationCounts[date]?.[type] || 0); // Ensure zero if no data
+  
+      const getColor = (opacity = 1) => {
+        switch (type) {
+          case 'SPEEDING': return `rgba(255, 0, 0, ${opacity})`; // Red
+          case 'GEOFENCE_VIOLATION': return `rgba(0, 255, 0, ${opacity})`; // Green
+          case 'HARD_ACCELERATION': return `rgba(0, 0, 255, ${opacity})`; // Blue
+          case 'HARD_BRAKING': return `rgba(255, 255, 0, ${opacity})`; // Yellow
+          case 'RED_LIGHT': return `rgba(255, 165, 0, ${opacity})`; // Orange
+          default: return `rgba(128, 128, 128, ${opacity})`; // Gray
+        }
+      };
+  
       return {
         data,
         label: type,
-        color,
+        color: getColor,
         strokeWidth: 2,
       };
     });
-
+  
     return {
       labels,
       datasets,
     };
-  };
+  };  
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

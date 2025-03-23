@@ -19,7 +19,7 @@ const RecentViolations: React.FC<RecentViolationsProps> = ({ violations }) => {
   };
 
   const openMap = (location: string) => {
-    const [latitude, longitude] = location.split(',').map(parseFloat);
+    const [latitude, longitude] = location.replace(/[()]/g, "").split(',').map(coord => parseFloat(coord.trim()));
     const url = `https://www.google.com/maps/?q=${latitude},${longitude}`;
     Linking.openURL(url);
   };

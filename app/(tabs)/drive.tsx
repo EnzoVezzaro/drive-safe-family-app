@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Animated, PanResponder, TouchableWi
 import { Text } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
-import { fetchDrivingData, updateLocation } from '../../store/drivingSlice';
+import { DEFAULT_LOCATION, fetchDrivingData, updateLocation } from '../../store/drivingSlice';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootParamList } from '../../types';
 import { useAppSelector } from '../../hooks/useRedux';
@@ -248,8 +248,8 @@ const Drive = () => {
 
   useEffect(() => {
     const loc_default = {
-      latitude: 18.472789, // DEFAULT: Catedral Primada de América, Santo Domingo, Dominican Republic
-      longitude: -69.883867,
+      latitude: DEFAULT_LOCATION.latitude, 
+      longitude: DEFAULT_LOCATION.longitude,
     }
     setTimeout(() => {
       if (location.latitude === loc_default.latitude || location.longitude === loc_default.longitude) {
