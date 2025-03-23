@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { supabase } from '../../lib/supabase';
+import { supabase, getScores } from '../../lib/supabase';
 import * as Violations from '../../lib/violations';
 import { useTranslation } from 'react-i18next';
 import Loading from '../../components/Loading';
@@ -24,6 +24,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [violationData, setViolationData] = useState<ViolationPercentage[] | null>(null);
   const [violations, setViolations] = useState<any[] | null>(null);
+  const [totalViolations, setTotalViolations] = useState<number>(0);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -32,44 +33,55 @@ const Profile = () => {
 
   useEffect(() => {
     fetchViolationData();
-  }, [t]);
+  }, [t, userId]);
 
   const fetchViolationData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      if (!userId) {
+        console.error('No user ID provided');
+        setLoading(false);
+        return;
+      }
+      const data: any = await getScores(userId, false);
+      
+      if (!data) {
+        console.error(t('profile.fetchError'));
+        setLoading(false);
+        return;
+      }
+
+      // Process the data from get_scores
+      const processedData = data[0]; // Assuming only one user's data is returned
+      const violationCounts = processedData.violation_types_count;
+      let totalViolations = 0;
+      for (const type in violationCounts) {
+        totalViolations += violationCounts[type].count;
+      }
+
+      setTotalViolations(totalViolations);
+    
+      const violationPercentages = Object.entries(processedData.violation_types_count).map(([type, violationData]: [string, any]) => {
+        const percentage = (violationData.count / totalViolations) * 100;
+        return { type: type, percentage: percentage };
+      });
+    
+      // console.log('violationPercentages: ', violationPercentages);
+      setViolationData(violationPercentages);
+
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const { data: recentViolationsData, error: recentViolationsError } = await supabase
         .from('violations')
         .select('*')
         .eq('user_id', userId)
-        .limit(50);
-
-        console.log('viol: ', userId);
-        
-
-      if (error) {
-        console.error(t('profile.fetchError'), error);
+        .limit(5)
+        .order('timestamp', { ascending: false });
+  
+      if (recentViolationsError) {
+        console.error('Error fetching recentViolations:', recentViolationsError);
       } else {
-        setViolations(data);
-        // Group violations by type
-        const groupedViolations = data.reduce((acc, violation) => {
-          const type = violation.type;
-          if (!acc[type]) {
-            acc[type] = [];
-          }
-          acc[type].push(violation);
-          return acc;
-        }, {});
-
-        // Calculate percentages for each violation type
-        const totalViolations: number = data.length;
-        let violationPercentages: ViolationPercentage[] = [];
-        Object.keys(groupedViolations).forEach(type => {
-          const count = groupedViolations[type].length;
-          const percentage: number = (count / totalViolations) * 100;
-          violationPercentages.push({ type, percentage });
-        });
-
-        setViolationData(violationPercentages);
+        console.log('recent: ', recentViolationsData);
+        setViolations(recentViolationsData);
       }
     } catch (error) {
       console.error(t('profile.fetchError'), error);
@@ -101,7 +113,7 @@ const Profile = () => {
               <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
 
               {/* Violations per 100 mile section */}
-              <Text style={styles.sectionTitle}>{t('profile.totalViolations')} {violations?.length || 0}</Text>
+              <Text style={styles.sectionTitle}>{t('profile.totalViolations')} {totalViolations}</Text>
 
               {/* Display violations */}
               {violationData && violationData.map((violation, index) => (
@@ -142,7 +154,7 @@ const Profile = () => {
                     />
                     <View style={styles.violationCardContent}>
                       <Text style={styles.violationCardTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
-                      <Text style={styles.violationCardDetails}>{violation.timestamp}</Text>
+                      <Text style={styles.violationCardDetails}>{new Date(violation.timestamp).toLocaleDateString()}</Text>
                     </View>
                   </TouchableOpacity>
                 ))}
