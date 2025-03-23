@@ -8,6 +8,9 @@
     "violationDetected": "Violation Detected",
     "acknowledge": "Acknowledge"
   },
+  "loading": {
+    "loading": "Loading..."
+  },
   "settings": {
     "title": "Settings",
     "enableNotifications": "Enable Notifications",
@@ -33,7 +36,7 @@
     "glad": "Glad to see you again!",
     "startRoute": "Start a new route",
     "averageSkill": "Average driving skill",
-    "currentLevel": "current level",
+    "currentLevel": "Current level",
     "reaction": "Reaction ",
     "smoothness": "Smoothness ",
     "wariness": "Wariness ",
@@ -49,10 +52,10 @@
     "acceleration": "Acceleration",
     "speedLimit": "Speed limit",
     "showResults": "Show Trip Results",
-    "niceTrip": "¡Buen viaje!",
+    "niceTrip": "Nice trip!",
     "totalViolations": "Total number of road violations",
     "feedback": "Your progress is great, but don't forget about speed limits. We also recommend you to slow down near crosswalks.",
-    "tripDetails": "Ver detalles",
+    "tripDetails": "View details",
     "alertZones": "Alert Zones",
     "noAlertZones": "No alert zones nearby",
     "schoolZoneDescription": "Be careful near schools.",
