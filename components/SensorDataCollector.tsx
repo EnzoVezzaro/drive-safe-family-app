@@ -168,7 +168,7 @@ const SensorDataCollector = () => {
   const [isViolationModalVisible, setViolationModalVisible] = useState(false);
   const [violationTimer, setViolationTimer] = useState(10);
   const [isViolationTimerRunning, setIsViolationTimerRunning] = useState(false);
-  const [lastViolation, setLastViolation] = useState<{code: string; label: string; timestamp: number} | null>(null);
+  const [lastViolation, setLastViolation] = useState<{code: string; label: string; timestamp: string} | null>(null);
   const [acknowledgeViolation, setAcknowledgeViolation] = useState(false);
 
   const [isRegistered, setIsRegistered] = useState(false);
@@ -227,14 +227,18 @@ const SensorDataCollector = () => {
     }
 
     if (lastViolation?.timestamp) {
-      const twoMinutesInMilliseconds = 2 * 60 * 1000;
-      const currentTime = Date.now();
-      const timeDifference = currentTime - lastViolation.timestamp;
+      const currentTime = new Date(); // Create a Date object for the current time
+      const lastViolationTime = new Date(lastViolation.timestamp); // Create a Date object for last violation's timestamp
+    
+      const twoMinutesInMilliseconds = 2 * 60 * 1000; // 2 minutes in milliseconds
+    
+      // Calculate the time difference in milliseconds
+      const timeDifference = currentTime.getTime() - lastViolationTime.getTime();
+    
       if (timeDifference < twoMinutesInMilliseconds) {
-        return; // Ignore violations if the same has been added 2 mins ago
+        return; // Ignore violations if the same has been added 2 minutes ago
       }
     }
-    
     setViolationModalVisible(true);
     setIsViolationTimerRunning(true);
 
@@ -249,7 +253,7 @@ const SensorDataCollector = () => {
             setLastViolation({
               code: code,
               label: label,
-              timestamp: Date.now(),
+              timestamp: new Date().toISOString(),
             });
             const sev = detectSeverity(code, speed);
             if (!acknowledgeViolation) {
@@ -273,7 +277,7 @@ const SensorDataCollector = () => {
     setLastViolation({
       code: 'ACKNOWLEDGE',
       label: 'ACKNOWLEDGE',
-      timestamp: Date.now()
+      timestamp: new Date().toISOString()
     });
   };
 
