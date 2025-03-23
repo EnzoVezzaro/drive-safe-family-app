@@ -1,6 +1,7 @@
 // app/profile.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Image, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking, Platform } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking, Platform, Image } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -80,7 +81,7 @@ const Profile = () => {
       if (recentViolationsError) {
         console.error('Error fetching recentViolations:', recentViolationsError);
       } else {
-        console.log('recent: ', recentViolationsData);
+        // console.log('recent: ', recentViolationsData);
         setViolations(recentViolationsData);
       }
     } catch (error) {
@@ -90,9 +91,17 @@ const Profile = () => {
     }
   };
 
+  const getMapImageURL = (location: string) => {
+    const [latitude, longitude] = location.replace(/[()]/g, "").split(',').map(coord => parseFloat(coord.trim()));
+    console.log('getting map for coord: ', latitude, longitude, location);
+    const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
+    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/geojson({"type":"Point","coordinates":[${longitude},${latitude}]})/${longitude},${latitude},12/300x200?access_token=${accessToken}`;
+    return url;
+  };
+
   const openMap = (location: string) => {
     const [latitude, longitude] = location.split(',').map(parseFloat);
-    const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    const url = `https://www.google.com/maps/?q=${latitude},${longitude}`;
     Linking.openURL(url);
   };
 
@@ -138,19 +147,16 @@ const Profile = () => {
 
               {/* Traffic violations section */}
               <View style={styles.sectionHeader}>
-                <Text style={styles.mainTitle}>{t('profile.trafficViolations')}</Text>
-                <TouchableOpacity>
-                  <Text style={styles.seeAllLink}>{t('profile.seeAll')}</Text>
-                </TouchableOpacity>
+                <Text style={styles.mainTitle}>{t('leaderboard.recentViolations')}</Text>
               </View>
 
               {/* Image carousel */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-                {violations && violations.map((violation, index) => (
+                {violations && violations.map((violation: any, index: number) => (
                   <TouchableOpacity key={index} style={styles.violationCard} onPress={() => openMap(violation.location)}>
                     <Image
-                      source={{ uri: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
-                    style={styles.violationImage}
+                      style={styles.violationImage}
+                      source={{ uri: getMapImageURL(violation.location) }}
                     />
                     <View style={styles.violationCardContent}>
                       <Text style={styles.violationCardTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
