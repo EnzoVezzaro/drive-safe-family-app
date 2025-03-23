@@ -16,8 +16,9 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async ({ data, error }: any) => {
   const dangerZones = state.driving.alertZones;
 
   console.log(`[BackgroundFetch] User ID: ${userId}`);
-  console.log(`[BackgroundFetch] Data:`, data ? 'true' : false);
-  console.log(`[BackgroundFetch] Error:`, error);
+  console.log(`[BackgroundFetch] Data:`, data ? 'true' : 'false');
+  // console.log(`[BackgroundFetch] Data Object:`, JSON.stringify(data));
+  console.log(`[BackgroundFetch] Error:`, error ? 'true' : 'false');
 
   // Call the collectSensorData function
   if (userId) {

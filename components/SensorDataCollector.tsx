@@ -14,7 +14,6 @@ import { View, StyleSheet, TouchableOpacity, Text, AppState, AppStateStatus } fr
 import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
-import { throttle, debounce } from 'lodash';
 
 interface LocationObject {
   latitude: number | null;
@@ -48,6 +47,8 @@ const SPEEDING_THRESHOLDS = {
   MODERATE: 40,
   HIGH: 60,
 };
+
+const DISTANCE_THRESHOLD = 200; // 200 meters
 
 export const detectSeverity = (violationType: string, speed?: number, speedLimit?: number) => {
   let severity = 1;
@@ -162,6 +163,7 @@ const SensorDataCollector = () => {
   const [acceleration, setAcceleration] = useState(0);
   const dispatch: AppDispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.auth.userId);
+  const locationTrackingEnabled = useSelector((state: RootState) => state.driving.locationTrackingEnabled);
   const [dangerZones, setDangerZones] = useState<DangerZone[]>([]);
   const [isViolationModalVisible, setViolationModalVisible] = useState(false);
   const [violationTimer, setViolationTimer] = useState(10);
@@ -278,7 +280,7 @@ const SensorDataCollector = () => {
   const startBackgroundTracking = async () => {
     try {
       console.log('Starting background tracking');
-      
+
       // First check if background tracking is already running
       const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK).catch(() => false);
       if (isRunning) {
@@ -289,14 +291,13 @@ const SensorDataCollector = () => {
       
       await Location.startLocationUpdatesAsync(BACKGROUND_FETCH_TASK, {
         accuracy: Location.Accuracy.BestForNavigation,
-        distanceInterval: 50,
+        distanceInterval: DISTANCE_THRESHOLD,
         foregroundService: {
           notificationTitle: "Location Tracking",
           notificationBody: "Tracking your driving activity"
         },
         // This ensures it keeps running in background
-        deferredUpdatesInterval: 5000,
-        deferredUpdatesDistance: 50
+        deferredUpdatesDistance: DISTANCE_THRESHOLD
       });
       
       const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK);
@@ -320,8 +321,16 @@ const SensorDataCollector = () => {
     }
   };
 
-  const throttledLocationUpdate = throttle(async (loc) => {
+  const throttledLocationUpdate = async (loc: any) => {
     if (!loc) return;
+
+    const locationTrackingEnabled = useSelector((state: RootState) => state.driving.locationTrackingEnabled);
+    console.log('[throttledLocationUpdate] Location update:', loc, locationTrackingEnabled);
+
+    if (!locationTrackingEnabled) {
+      console.log('Location tracking disabled, skipping update');
+      return;
+    }
     
     // Update basic location info immediately
     dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
@@ -347,10 +356,10 @@ const SensorDataCollector = () => {
     
     // Queue up the speed limit check (runs less frequently)
     debouncedSpeedLimitCheck(loc, currentSpeed);
-  }, 1000); // Limit to once per second maximum
+  };
   
   // Create a debounced version of the speed limit API call
-  const debouncedSpeedLimitCheck = debounce(async (loc, currentSpeed) => {
+  const debouncedSpeedLimitCheck = async (loc: any, currentSpeed: any) => {
     try {
       const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
       dispatch(updateSpeedLimit(currentSpeedLimit));
@@ -366,10 +375,10 @@ const SensorDataCollector = () => {
     } catch (error) {
       console.error('Error checking speed limit:', error);
     }
-  }, 5000); // Only check speed limit every 5 seconds
+  };
   
   // Function to check geofences
-  const checkGeofences = (loc) => {
+  const checkGeofences = (loc: any) => {
     if (dangerZones.length === 0) return;
     
     const userPoint = point([loc.coords.longitude, loc.coords.latitude]);
@@ -417,7 +426,7 @@ const SensorDataCollector = () => {
       const subscription = await Location.watchPositionAsync(
         { 
           accuracy: Location.Accuracy.BestForNavigation, 
-          distanceInterval: 50 
+          distanceInterval: DISTANCE_THRESHOLD
         },
         (loc) => {
           // Use throttled handler instead of doing everything inline
@@ -433,40 +442,13 @@ const SensorDataCollector = () => {
   };
 
   const stopForegroundTracking = () => {
-    console.log('Stopping foreground tracking');
+    console.log('Stopping foreground tracking: ', locationSubscription);
     if (locationSubscription) {
       locationSubscription.remove();
-      setLocationSubscription(null);
       console.log('Foreground tracking stopped');
+      setLocationSubscription(null);
     }
   };
-
-  // Handle app state changes (foreground/background)
-  useEffect(() => {
-    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-      console.log('App state changed from', appState, 'to', nextAppState);
-      
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        // App has come to the foreground
-        console.log('App has come to the foreground');
-        await stopBackgroundTracking();
-        await startForegroundTracking();
-      } else if (appState === 'active' && nextAppState.match(/inactive|background/)) {
-        // App has gone to the background
-        console.log('App has gone to the background');
-        await stopForegroundTracking();
-        await startBackgroundTracking();
-      }
-      
-      setAppState(nextAppState);
-    };
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-
-    return () => {
-      subscription.remove();
-    };
-  }, [appState, locationSubscription]);
 
   // Initial setup on component mount
   useEffect(() => {
@@ -487,9 +469,12 @@ const SensorDataCollector = () => {
         if (AppState.currentState === 'active') {
           console.log('App is active, starting foreground tracking');
           await startForegroundTracking();
+          setTimeout(async () => {
+            await startBackgroundTracking();
+          }, 2000);
         } else {
           console.log('App is in background, starting background tracking');
-          await startBackgroundTracking();
+          // await startBackgroundTracking();
         }
       } catch (error) {
         console.error('Error in setupLocationTracking:', error);
@@ -497,14 +482,6 @@ const SensorDataCollector = () => {
     };
 
     setupLocationTracking();
-    
-    // Cleanup on component unmount
-    return () => {
-      stopForegroundTracking();
-      (async () => {
-        await stopBackgroundTracking();
-      })();
-    };
   }, []);
 
   // Accelerometer setup
@@ -518,6 +495,21 @@ const SensorDataCollector = () => {
 
     return () => subscription.remove();
   }, [dispatch]);
+
+  useEffect(() => {
+    console.log('[locationTrackingEnabled] Location tracking:', locationTrackingEnabled);
+    if (locationTrackingEnabled){
+      console.log('[locationTrackingEnabled] Starting again tracking');
+      startForegroundTracking();
+      setTimeout(async () => {
+        await startBackgroundTracking();
+      }, 2000);
+    } else {
+      console.log('[locationTrackingEnabled] Shutting down tracking');
+      stopForegroundTracking();
+      stopBackgroundTracking();
+    }
+  }, [locationTrackingEnabled]);
 
   // Fetch danger zones when userId changes
   useEffect(() => {
