@@ -1,0 +1,4 @@
+ALTER TABLE violations
+ADD COLUMN speed FLOAT NULL,
+ADD COLUMN speed_limit FLOAT NULL,
+ADD COLUMN geo_id UUID REFERENCES danger_zones(id) NULL;
