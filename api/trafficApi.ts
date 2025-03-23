@@ -1,3 +1,4 @@
+import { DISTANCE_THRESHOLD } from '@/components/SensorDataCollector';
 import { supabase } from '../lib/supabase';
 import axios from 'axios';
 
@@ -178,7 +179,7 @@ export async function getSpeedLimitMapbox(latitude: number, longitude: number): 
     const distance = haversine(latitude, longitude, cachedData.latitude, cachedData.longitude);
     console.log('Distance from cached location:', distance);
     // 50 meters
-    if (distance <= 50) {
+    if (distance <= DISTANCE_THRESHOLD) {
       console.log('Using cached speed limit');
       return cachedData.key;
     } else {

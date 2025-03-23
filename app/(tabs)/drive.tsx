@@ -3,12 +3,13 @@ import { View, StyleSheet, TouchableOpacity, Animated, PanResponder, TouchableWi
 import { Text } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
-import { fetchDrivingData } from '../../store/drivingSlice';
+import { fetchDrivingData, updateLocation } from '../../store/drivingSlice';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootParamList } from '../../types';
 import { useAppSelector } from '../../hooks/useRedux';
 import { useTranslation } from 'react-i18next';
 import MapboxGL from '@rnmapbox/maps';
+import * as Location from 'expo-location';
 
 const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
 console.log("Mapbox access token:", accessToken);
@@ -99,7 +100,7 @@ const Drive = () => {
   console.log('location: ', location);
   
   // Helper function to get zone type
-  const getZoneTypeFromLabel = (label) => {
+  const getZoneTypeFromLabel = (label: string) => {
     const lowerLabel = (label || '').toLowerCase();
     if (lowerLabel.includes('school') || lowerLabel.includes('escuela')) return 'school';
     if (lowerLabel.includes('accident') || lowerLabel.includes('accidente')) return 'accident';
@@ -107,7 +108,7 @@ const Drive = () => {
   };
   
   // Helper function to get zone color
-  const getZoneColor = (zoneType) => {
+  const getZoneColor = (zoneType: string) => {
     switch (zoneType) {
       case 'school': return '#FFC107';
       case 'accident': return '#F44336';
@@ -192,16 +193,20 @@ const Drive = () => {
   };
 
   // New function to handle current location
-  const handleCurrentLocation = () => {
-    if (cameraRef.current && location && location.latitude && location.longitude) {
+  const handleCurrentLocation = async () => {
+    if (cameraRef.current) {
+      const location = await Location.getCurrentPositionAsync({});
+      dispatch(updateLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude }));
+      /*
       cameraRef.current.setCamera({
-        centerCoordinate: [location.longitude, location.latitude],
+        centerCoordinate: [location.coords.longitude, location.coords.latitude], // Correct order: [longitude, latitude]
         zoomLevel: zoomLevel,
         animationDuration: 500,
       });
+      */
     }
   };
-
+  
   // Function to render alert zone items in the bottom sheet
   const renderAlertZoneList = () => {
     if (!alertZones || alertZones.length === 0) {
@@ -240,6 +245,18 @@ const Drive = () => {
       );
     });
   };
+
+  useEffect(() => {
+    const loc_default = {
+      latitude: 18.472789, // DEFAULT: Catedral Primada de América, Santo Domingo, Dominican Republic
+      longitude: -69.883867,
+    }
+    setTimeout(() => {
+      if (location.latitude === loc_default.latitude || location.longitude === loc_default.longitude) {
+        handleCurrentLocation();
+      }
+    }, 2000);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -292,9 +309,9 @@ const Drive = () => {
             </View>
           </View>
           <View style={styles.speedTextContainer}>
-            <Text style={styles.speedTitle}>{t('drive.speed')} ({speedKmh || 0} km/h)</Text>
-            <Text style={styles.speedTitle}>{t('drive.acceleration')} ({acceleration.toFixed(2) || 0} m/s)</Text>
-            <Text style={styles.speedLimit}>{t('drive.speedLimit')} - {speedLimit} km/h</Text>
+            <Text style={styles.speedTitle}>{t('drive.speed')} ({parseFloat(speedKmh).toFixed(2) || 0} {t('drive.kmh')})</Text>
+            <Text style={styles.speedTitle}>{t('drive.acceleration')} ({acceleration.toFixed(2) || 0} {t('drive.ms')})</Text>
+            <Text style={styles.speedLimit}>{t('drive.speedLimit')} - {speedLimit.toFixed(2)} {t('drive.kmh')}</Text>
           </View>
         </View>
 

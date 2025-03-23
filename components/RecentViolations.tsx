@@ -11,8 +11,8 @@ const RecentViolations: React.FC<RecentViolationsProps> = ({ violations }) => {
   const { t } = useTranslation();
 
   const getMapImageURL = (location: string) => {
+    if (!location) return '';
     const [latitude, longitude] = location.replace(/[()]/g, "").split(',').map(coord => parseFloat(coord.trim()));
-    console.log('getting map for coord: ', latitude, longitude, location);
     const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
     const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/geojson({"type":"Point","coordinates":[${longitude},${latitude}]})/${longitude},${latitude},12/300x200?access_token=${accessToken}`;
     return url;
@@ -24,7 +24,16 @@ const RecentViolations: React.FC<RecentViolationsProps> = ({ violations }) => {
     Linking.openURL(url);
   };
 
-  console.log('here: ', violations);
+  const getSeverity = (severity: number) => {
+    if (severity === 1) {
+      return t('home.low');
+    } else if (severity === 2 || severity === 3) {
+      return t('home.medium');
+    } else if (severity >= 4) {
+      return t('home.high');
+    }
+    return t('home.unknown');
+  };
 
   return (
     <View style={styles.recentViolations}>
@@ -40,11 +49,14 @@ const RecentViolations: React.FC<RecentViolationsProps> = ({ violations }) => {
               <Text style={styles.violationCardTitle}>{t(Violations.ViolationLabels[violation.type as keyof typeof Violations.ViolationLabels])}</Text>
               <Text style={styles.violationCardDetails}>{new Date(violation.timestamp).toLocaleDateString()}</Text>
               {violation.severity && (
-                <Text style={styles.violationCardDetails}>Severity: {violation.severity}</Text>
+                <Text style={styles.violationCardDetails}>Severity: {getSeverity(violation.severity)}</Text>
               )}
               {violation.speed && (
-                <Text style={styles.violationCardDetails}>Speed: {violation.speed}</Text>
+                <Text style={styles.violationCardDetails}>Speed: {parseFloat(violation.speed).toFixed(2)} {t('drive.kmh')}</Text> 
               )}
+              {/*violation.geo_id && (
+                <Text style={styles.violationCardDetails}>Name: {violation.geo_id}</Text> 
+              )*/}
             </View>
           </TouchableOpacity>
         ))}

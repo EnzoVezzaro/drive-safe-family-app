@@ -48,6 +48,8 @@
     "familyDashboard": "See your family's dashboard"
   },
   "drive": {
+    "kmh": "km/h",
+    "ms": "m/s",
     "speed": "Speed",
     "acceleration": "Acceleration",
     "speedLimit": "Speed limit",

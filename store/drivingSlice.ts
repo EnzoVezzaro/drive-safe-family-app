@@ -19,8 +19,8 @@ const initialState: DrivingState = {
   speed: 0,
   acceleration: 0,
   location: {
-    latitude: null,
-    longitude: null,
+    latitude: 18.472789, // DEFAULT: Catedral Primada de América, Santo Domingo, Dominican Republic
+    longitude: -69.883867,
   },
   violations: [],
   drivingScore: 100,
@@ -31,7 +31,7 @@ const initialState: DrivingState = {
 
 export const addViolationToSupabase = createAsyncThunk(
   'driving/addViolationToSupabase',
-  async ({ userId, violationCode, severity }: { userId: string; violationCode: string, severity: number }, { getState }) => {
+  async ({ userId, violationCode, severity, geo_id }: { userId: string; violationCode: string, severity: number, geo_id?: string }, { getState }) => {
     console.log('addViolationToSupabase called with:', { userId, violationCode });
     const state: any = getState();
     const { latitude, longitude } = state.driving.location;
@@ -44,7 +44,10 @@ export const addViolationToSupabase = createAsyncThunk(
           user_id: userId, 
           type: violationCode, 
           location: `${latitude},${longitude}`,
-          severity: severity 
+          severity: severity,
+          speed: state.driving.speed,
+          speed_limit: state.driving.speedLimit, 
+          geo_id: geo_id
         }]);
 
       if (error) {

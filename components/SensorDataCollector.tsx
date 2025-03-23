@@ -42,13 +42,13 @@ export const detectActivity = (speed: number) => {
 };
 
 // Thresholds for speeding
-const SPEEDING_THRESHOLDS = {
+export const SPEEDING_THRESHOLDS = {
   LOW: 20,
   MODERATE: 40,
   HIGH: 60,
 };
 
-const DISTANCE_THRESHOLD = 200; // 200 meters
+export const DISTANCE_THRESHOLD = 100; // 100 meters
 
 export const detectSeverity = (violationType: string, speed?: number, speedLimit?: number) => {
   let severity = 1;
@@ -128,7 +128,7 @@ export const collectSensorData = async (dispatch: AppDispatch, userId: string, d
               const violationCode = 'GEOFENCE_VIOLATION';
               const sev = detectSeverity(violationCode, speedKMH || 0);
               console.log('[collectSensorData] Sending Geofence violation: ', violationCode);
-              dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev }));
+              dispatch(addViolationToSupabase({ userId: userId, violationCode: violationCode, severity: sev, geo_id: dangerZone.id }));
             }
           }
         });
@@ -221,7 +221,7 @@ const SensorDataCollector = () => {
     setIsViolationTimerRunning(false);
   };
 
-  const handleViolation = (code: string, label: string) => {
+  const handleViolation = (code: string, label: string, geo_id?: string) => {
     if (isViolationTimerRunning) {
       return; // Ignore violations if timer is running
     }
@@ -249,11 +249,11 @@ const SensorDataCollector = () => {
             setLastViolation({
               code: code,
               label: label,
-              timestamp: Date.now()
+              timestamp: Date.now(),
             });
             const sev = detectSeverity(code, speed);
             if (!acknowledgeViolation) {
-              dispatch(addViolationToSupabase({ userId: userId, violationCode: code, severity: sev }));
+              dispatch(addViolationToSupabase({ userId: userId, violationCode: code, severity: sev, geo_id: geo_id }));
             }
           }
           resetViolationState();
@@ -392,7 +392,7 @@ const SensorDataCollector = () => {
         if (booleanPointInPolygon(userPoint, polygon)) {
           const violationCode = 'GEOFENCE_VIOLATION';
           if (!acknowledgeViolation) {
-            handleViolation(violationCode, dangerZone.label);
+            handleViolation(violationCode, dangerZone.label, dangerZone.id); 
           }
           break; // Exit after finding first match to reduce processing
         }
