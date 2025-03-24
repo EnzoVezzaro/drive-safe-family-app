@@ -11,6 +11,10 @@
   "loading": {
     "loading": "Cargando..."
   },
+  "alerts": {
+    "locationAlways": "Permite que DriveSafe use tu ubicación",
+    "locationAlwaysDescription": "Abre la configuración de tu aplicación para permitir que DriveSafe acceda a tu posición actual. Por favor, habilita el acceso a la ubicación 'Siempre' en la configuración de tu dispositivo."
+  },
   "settings": {
     "title": "Ajustes",
     "enableNotifications": "Activar notificaciones",
@@ -115,5 +119,55 @@
     "next": "Siguiente",
     "back": "Atrás",
     "getStarted": "Empezar"
+  },
+  "signIn": {
+    "loginTitle": "Iniciar sesión en DriveSafe Family",
+    "noAccountPrompt": "¿No tienes una cuenta? ",
+    "signupLink": "Regístrate",
+    "emailPlaceholder": "Dirección de correo electrónico",
+    "passwordPlaceholder": "Contraseña",
+    "recoveryPasswordLink": "Recuperar contraseña",
+    "continueButton": "Continuar",
+    "orSignUpWith": "o regístrate con",
+    "termsAgreement": "Al hacer clic en Crear cuenta, aceptas los Términos de Recognotes",
+    "termsOfUseLink": "Términos de uso",
+    "and": "y",
+    "privacyPolicyLink": "Política de privacidad",
+    "signInFailedAlertTitle": "Error al iniciar sesión",
+    "errorAlertTitle": "Error",
+    "failedFetchData": "Error al obtener los datos del usuario.",
+    "errorFetchingData": "Error al obtener los datos del usuario:",
+    "couldNotRetrieveUserDataTable": "No se pudieron recuperar los datos del usuario de la tabla de usuarios.",
+    "couldNotRetrieveUserData": "No se pudieron recuperar los datos del usuario."
+  },
+  "signUp": {
+    "createAccountTitle": "Crear una cuenta",
+    "alreadyHaveAccountPrompt": "¿Ya tienes una cuenta? ",
+    "loginLink": "Iniciar sesión",
+    "emailPlaceholder": "Dirección de correo electrónico",
+    "passwordPlaceholder": "Contraseña",
+    "selectYourRoleLabel": "Selecciona tu rol",
+    "continueButton": "Continuar",
+    "orSignUpWith": "o regístrate con",
+    "termsAgreement": "Al hacer clic en Crear cuenta, aceptas los Términos de Recognotes",
+    "termsOfUseLink": "Términos de uso",
+    "and": "y",
+    "privacyPolicyLink": "Política de privacidad",
+    "signUpFailedAlertTitle": "Error al registrarse",
+    "signUpSuccessfulAlertTitle": "Registro exitoso",
+    "checkEmailMessage": "Por favor, revisa tu correo electrónico para verificar tu cuenta.",
+    "selectRolePlaceholder": "Seleccionar rol"
+  },
+  "forgotPassword": {
+    "recoveryPasswordTitle": "Recuperar contraseña",
+    "rememberPasswordPrompt": "¿Recuerdas tu contraseña? ",
+    "loginLink": "Iniciar sesión",
+    "emailDescription": "Ingresa la dirección de correo electrónico asociada con tu cuenta y te enviaremos un enlace para restablecer tu contraseña.",
+    "emailPlaceholder": "Dirección de correo electrónico",
+    "sendResetLinkButton": "Enviar enlace de restablecimiento",
+    "backToSignInLink": "Volver a Iniciar sesión",
+    "resetPasswordFailedAlertTitle": "Error al restablecer la contraseña",
+    "resetPasswordSuccessfulAlertTitle": "Contraseña restablecida con éxito",
+    "checkEmailMessage": "Por favor, revisa tu correo electrónico para restablecer tu contraseña."
   }
 }

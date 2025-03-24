@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, SafeAreaView, Switch, Alert, Linking, AppState, Platform } from 'react-native';
 import { useAppDispatch } from '../hooks/useRedux';
 import { setOnboardingComplete } from '../store/authSlice';
 import { useRouter } from 'expo-router';
 import i18n from '../i18n';
+import * as Location from 'expo-location';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -34,8 +36,22 @@ const onboardingData = [
 
 const Onboarding = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [locationAlwaysActive, setLocationAlwaysActive] = useState(false);
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const router = useRouter();
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      await Location.requestForegroundPermissionsAsync();
+
+      let { status: backgroundLocationStatus } = await Location.requestBackgroundPermissionsAsync();
+      // For location always, we'll assume it's granted if backgroundLocation is granted
+      setLocationAlwaysActive(backgroundLocationStatus === 'granted');
+    };
+
+    checkPermissions();
+  }, []);
 
   const handleNext = () => {
     if (currentIndex < onboardingData.length - 1) {
@@ -43,6 +59,29 @@ const Onboarding = () => {
     } else {
       dispatch(setOnboardingComplete());
       router.navigate('/(tabs)');
+    }
+  };
+
+  const askPermissionsSettings = async () => {
+    const openAppSettings = () => Linking.openURL('app-settings:');
+    Alert.alert(
+      t('alerts.locationAlways'),
+      t('alerts.locationAlwaysDescription'),
+      [
+        { text: 'Cancel', onPress: () => console.warn('Cancel pressed') },
+        { text: 'Open settings', onPress: openAppSettings },
+      ]
+    );
+  }
+
+  const toggleLocationAlways = async () => {
+    console.log('toggleLocationAlways');
+    let { status } = await Location.requestBackgroundPermissionsAsync();
+    console.log('toggleLocationAlways status', status);
+    if (status !== 'granted') {
+      askPermissionsSettings();
+    } else {
+      setLocationAlwaysActive(status === 'granted');
     }
   };
 
@@ -75,7 +114,29 @@ const Onboarding = () => {
         />
 
         <Text style={styles.title}>{onboardingData[currentIndex].title}</Text>
-        <Text style={styles.description}>{onboardingData[currentIndex].description}</Text>
+        {currentIndex === onboardingData.length - 1 ? (
+          <View>
+            <Text style={styles.description}>{i18n.t('onboarding.permissionsDescription')}</Text>
+            <View style={{ marginTop: 20 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text>Location Always</Text>
+                <Switch
+                  value={locationAlwaysActive}
+                  onValueChange={toggleLocationAlways}
+                />
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text>Background Location</Text>
+                <Switch
+                  value={locationAlwaysActive}
+                  onValueChange={toggleLocationAlways}
+                />
+              </View>
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.description}>{onboardingData[currentIndex].description}</Text>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -101,12 +162,20 @@ const Onboarding = () => {
               {i18n.t('onboarding.back')}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.nextButton}
+          <TouchableOpacity
+            style={[
+              styles.nextButton,
+              currentIndex === onboardingData.length - 1 && (!locationAlwaysActive)
+                ? { backgroundColor: '#DDD' }
+                : { backgroundColor: '#4A3AFF' },
+            ]}
             onPress={handleNext}
+            disabled={currentIndex === onboardingData.length - 1 && (!locationAlwaysActive)}
           >
             <Text style={styles.nextButtonText}>
-              {currentIndex === onboardingData.length - 1 ? i18n.t('onboarding.getStarted') : i18n.t('onboarding.next')}
+              {currentIndex === onboardingData.length - 1
+                ? i18n.t('onboarding.getStarted')
+                : i18n.t('onboarding.next')}
             </Text>
           </TouchableOpacity>
         </View>

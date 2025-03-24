@@ -11,6 +11,10 @@
   "loading": {
     "loading": "Loading..."
   },
+  "alerts": {
+    "locationAlways": "Allow DriveSafe to Use your Location",
+    "locationAlwaysDescription": "Open your app settings to allow DriveSafe to access your current position. Please enable location access for 'All the time' in your device settings."
+  },
   "settings": {
     "title": "Settings",
     "enableNotifications": "Enable Notifications",
@@ -115,5 +119,55 @@
     "next": "Next",
     "back": "Back",
     "getStarted": "Get Started"
+  },
+  "signIn": {
+    "loginTitle": "Login to DriveSafe Family",
+    "noAccountPrompt": "Don't have an account? ",
+    "signupLink": "Signup",
+    "emailPlaceholder": "Email address",
+    "passwordPlaceholder": "Password",
+    "recoveryPasswordLink": "Recovery Password",
+    "continueButton": "Continue",
+    "orSignUpWith": "or sign up with",
+    "termsAgreement": "By clicking Create account you agree to Recognotes",
+    "termsOfUseLink": "Terms of use",
+    "and": "and",
+    "privacyPolicyLink": "Privacy policy",
+    "signInFailedAlertTitle": "Sign In Failed",
+    "errorAlertTitle": "Error",
+    "failedFetchData": "Failed to fetch user data.",
+    "errorFetchingData": "Error fetching user data:",
+    "couldNotRetrieveUserDataTable": "Could not retrieve user data from users table.",
+    "couldNotRetrieveUserData": "Could not retrieve user data."
+  },
+  "signUp": {
+    "createAccountTitle": "Create an account",
+    "alreadyHaveAccountPrompt": "Already have an account? ",
+    "loginLink": "Login",
+    "emailPlaceholder": "Email address",
+    "passwordPlaceholder": "Password",
+    "selectYourRoleLabel": "Select your role",
+    "continueButton": "Continue",
+    "orSignUpWith": "or sign up with",
+    "termsAgreement": "By clicking Create account you agree to Recognotes",
+    "termsOfUseLink": "Terms of use",
+    "and": "and",
+    "privacyPolicyLink": "Privacy policy",
+    "signUpFailedAlertTitle": "Sign Up Failed",
+    "signUpSuccessfulAlertTitle": "Sign Up Successful",
+    "checkEmailMessage": "Please check your email to verify your account.",
+    "selectRolePlaceholder": "Select role"
+  },
+  "forgotPassword": {
+    "recoveryPasswordTitle": "Recovery Password",
+    "rememberPasswordPrompt": "Remember your password? ",
+    "loginLink": "Login",
+    "emailDescription": "Enter the email address associated with your account and we'll send you a link to reset your password.",
+    "emailPlaceholder": "Email address",
+    "sendResetLinkButton": "Send Reset Link",
+    "backToSignInLink": "Back to Sign In",
+    "resetPasswordFailedAlertTitle": "Reset Password Failed",
+    "resetPasswordSuccessfulAlertTitle": "Reset Password Successful",
+    "checkEmailMessage": "Please check your email to reset your password."
   }
 }

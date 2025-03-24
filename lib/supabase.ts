@@ -98,7 +98,8 @@ export async function getScores(userId: string, isFamily: boolean = false) {
     console.error('No user ID provided');
     return null;
   }
-
+  console.log('userId: ', userId);
+  
   // Call the PostgreSQL function get_scores with the userId as input
   console.log('Getting info for: ', isFamily ? 'Family' : 'Me');
   let { data, error } = await supabase

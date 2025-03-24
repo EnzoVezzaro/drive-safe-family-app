@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaVie
 import { passwordReset } from '../../lib/supabase';
 import { Dispatch, SetStateAction } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface ForgotPasswordProps {
   setActiveScreen: Dispatch<SetStateAction<string>>;
@@ -10,37 +11,38 @@ interface ForgotPasswordProps {
 
 const ForgotPassword = ({ setActiveScreen }: ForgotPasswordProps) => {
   const [email, setEmail] = useState('');
+  const { t } = useTranslation();
 
   const handleResetPassword = async () => {
     const { data, error } = await passwordReset({ email });
 
     if (error) {
-      Alert.alert('Reset Password Failed', error.message);
+      Alert.alert(t('forgotPassword.resetPasswordFailedAlertTitle'), error.message);
     } else {
-      Alert.alert('Reset Password Successful', 'Please check your email to reset your password.');
+      Alert.alert(t('forgotPassword.resetPasswordSuccessfulAlertTitle'), t('forgotPassword.checkEmailMessage'));
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Recovery Password</Text>
+        <Text style={styles.title}>{t('forgotPassword.recoveryPasswordTitle')}</Text>
         
         <View style={styles.loginPrompt}>
-          <Text style={styles.promptText}>Remember your password? </Text>
+          <Text style={styles.promptText}>{t('forgotPassword.rememberPasswordPrompt')}</Text>
           <TouchableOpacity onPress={() => setActiveScreen('SignIn')}>
-            <Text style={styles.loginLink}>Login</Text>
+            <Text style={styles.loginLink}>{t('forgotPassword.loginLink')}</Text>
           </TouchableOpacity>
         </View>
         
         <Text style={styles.descriptionText}>
-          Enter the email address associated with your account and we'll send you a link to reset your password.
+          {t('forgotPassword.emailDescription')}
         </Text>
 
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Email address"
+            placeholder={t('forgotPassword.emailPlaceholder')}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -49,7 +51,7 @@ const ForgotPassword = ({ setActiveScreen }: ForgotPasswordProps) => {
         </View>
 
         <TouchableOpacity style={styles.continueButton} onPress={handleResetPassword}>
-          <Text style={styles.continueButtonText}>Send Reset Link</Text>
+          <Text style={styles.continueButtonText}>{t('forgotPassword.sendResetLinkButton')}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -57,7 +59,7 @@ const ForgotPassword = ({ setActiveScreen }: ForgotPasswordProps) => {
           onPress={() => setActiveScreen('SignIn')}
         >
           <Ionicons name="arrow-back" size={20} color="#6C63FF" />
-          <Text style={styles.backButtonText}>Back to Sign In</Text>
+          <Text style={styles.backButtonText}>{t('forgotPassword.backToSignInLink')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

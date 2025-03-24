@@ -7,6 +7,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from 'react-i18next';
 
 interface SignInProps {
   setActiveScreen: Dispatch<SetStateAction<string>>;
@@ -18,12 +19,13 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const { t } = useTranslation();
 
   const handleSignIn = async () => {
     const { data, error } = await signIn({ email, password });
 
     if (error) {
-      Alert.alert('Sign In Failed', error.message);
+      Alert.alert(t('signIn.signInFailedAlertTitle'), error.message);
     } else {
       if (data.session && data.session.user) {
         
@@ -34,9 +36,11 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
           .eq('email', email)
           .single();
 
+          console.log('userData', userData);
+          
         if (userError) {
-          Alert.alert('Error', 'Failed to fetch user data.');
-          console.error('Error fetching user data:', userError);
+          Alert.alert(t('signIn.errorAlertTitle'), t('signIn.failedFetchData'));
+          console.error(t('signIn.errorFetchingData'), userError);
           return;
         }
 
@@ -48,10 +52,10 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
           }));
           navigation.navigate('(tabs)' as never);
         } else {
-          Alert.alert('Sign In Failed', 'Could not retrieve user data from users table.');
+          Alert.alert(t('signIn.signInFailedAlertTitle'), t('signIn.couldNotRetrieveUserDataTable'));
         }
       } else {
-        Alert.alert('Sign In Failed', 'Could not retrieve user data.');
+        Alert.alert(t('signIn.signInFailedAlertTitle'), t('signIn.couldNotRetrieveUserData'));
       }
     }
   };
@@ -59,19 +63,19 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Login to DriveSafe Family</Text>
+        <Text style={styles.title}>{t('signIn.loginTitle')}</Text>
         
         <View style={styles.loginPrompt}>
-          <Text style={styles.promptText}>Don't have an account? </Text>
+          <Text style={styles.promptText}>{t('signIn.noAccountPrompt')}</Text>
           <TouchableOpacity onPress={() => setActiveScreen('SignUp')}>
-            <Text style={styles.loginLink}>Signup</Text>
+            <Text style={styles.loginLink}>{t('signIn.signupLink')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Email address"
+            placeholder={t('signIn.emailPlaceholder')}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -82,7 +86,7 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder={t('signIn.passwordPlaceholder')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -100,17 +104,17 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
         </View>
 
         <TouchableOpacity onPress={() => setActiveScreen('ForgotPassword')}>
-          <Text style={styles.forgotPassword}>Recovery Password</Text>
+          <Text style={styles.forgotPassword}>{t('signIn.recoveryPasswordLink')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.continueButton} onPress={handleSignIn}>
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{t('signIn.continueButton')}</Text>
         </TouchableOpacity>
 
         {/**
         <View style={styles.dividerContainer}>
           <View style={styles.divider} />
-          <Text style={styles.dividerText}>or sign up with</Text>
+          <Text style={styles.dividerText}>{t('signIn.orSignUpWith')}</Text>
           <View style={styles.divider} />
         </View>
 
@@ -143,15 +147,15 @@ const SignIn = ({ setActiveScreen }: SignInProps) => {
 
         <View style={styles.termsContainer}>
           <Text style={styles.termsText}>
-            By clicking Create account you agree to Recognotes 
+            {t('signIn.termsAgreement')} 
           </Text>
           <View style={styles.termsLinksContainer}>
             <TouchableOpacity>
-              <Text style={styles.termsLink}>Terms of use</Text>
+              <Text style={styles.termsLink}>{t('signIn.termsOfUseLink')}</Text>
             </TouchableOpacity>
-            <Text style={styles.termsText}> and </Text>
+            <Text style={styles.termsText}> {t('signIn.and')} </Text>
             <TouchableOpacity>
-              <Text style={styles.termsLink}>Privacy policy</Text>
+              <Text style={styles.termsLink}>{t('signIn.privacyPolicyLink')}</Text>
             </TouchableOpacity>
           </View>
         </View>

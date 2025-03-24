@@ -87,8 +87,8 @@ const Settings = () => {
     const showAppSettingsAlert = () => {
       const openAppSettings = () => Linking.openURL('app-settings:');
       Alert.alert(
-        'Allow DriveSafe to Use your Location',
-        'Open your app settings to allow DriveSafe to access your current position. Without it, you won’t be able to use the love compass',
+        t('alerts.locationAlways'),
+        t('alerts.locationAlwaysDescription'),
         [
           { text: 'Cancel', onPress: () => console.warn('Cancel pressed') },
           { text: 'Open settings', onPress: openAppSettings },

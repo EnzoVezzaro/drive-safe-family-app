@@ -4,6 +4,7 @@ import { signUp } from '../../lib/supabase';
 import { SelectList } from 'react-native-dropdown-select-list';
 import { Dispatch, SetStateAction } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface SignUpProps {
   setActiveScreen: Dispatch<SetStateAction<string>>;
@@ -14,6 +15,7 @@ const SignUp = ({ setActiveScreen }: SignUpProps) => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const { t } = useTranslation();
 
   const data = [
     { key: 'parent', value: 'parent' },
@@ -24,9 +26,9 @@ const SignUp = ({ setActiveScreen }: SignUpProps) => {
     const { data, error } = await signUp({ email, password, role });
 
     if (error) {
-      Alert.alert('Sign Up Failed', error.message);
+      Alert.alert(t('signUp.signUpFailedAlertTitle'), error.message);
     } else {
-      Alert.alert('Sign Up Successful', 'Please check your email to verify your account.');
+      Alert.alert(t('signUp.signUpSuccessfulAlertTitle'), t('signUp.checkEmailMessage'));
       setActiveScreen('SignIn');
     }
   };
@@ -34,19 +36,19 @@ const SignUp = ({ setActiveScreen }: SignUpProps) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Create an account</Text>
+        <Text style={styles.title}>{t('signUp.createAccountTitle')}</Text>
         
         <View style={styles.loginPrompt}>
-          <Text style={styles.promptText}>Already have an account? </Text>
+          <Text style={styles.promptText}>{t('signUp.alreadyHaveAccountPrompt')}</Text>
           <TouchableOpacity onPress={() => setActiveScreen('SignIn')}>
-            <Text style={styles.loginLink}>Login</Text>
+            <Text style={styles.loginLink}>{t('signUp.loginLink')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Email address"
+            placeholder={t('signUp.emailPlaceholder')}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -57,7 +59,7 @@ const SignUp = ({ setActiveScreen }: SignUpProps) => {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder={t('signUp.passwordPlaceholder')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -75,7 +77,7 @@ const SignUp = ({ setActiveScreen }: SignUpProps) => {
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Select your role</Text>
+          <Text style={styles.label}>{t('signUp.selectYourRoleLabel')}</Text>
           <SelectList
             setSelected={(val: string) => setRole(val)}
             data={data}
@@ -85,18 +87,18 @@ const SignUp = ({ setActiveScreen }: SignUpProps) => {
             inputStyles={styles.selectInput}
             dropdownTextStyles={styles.dropdownText}
             search={false}
-            placeholder="Select role"
+            placeholder={t('signUp.selectRolePlaceholder')}
           />
         </View>
 
         <TouchableOpacity style={styles.continueButton} onPress={handleSignUp}>
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{t('signUp.continueButton')}</Text>
         </TouchableOpacity>
 
         {/**
         <View style={styles.dividerContainer}>
           <View style={styles.divider} />
-          <Text style={styles.dividerText}>or sign up with</Text>
+          <Text style={styles.dividerText}>{t('signUp.orSignUpWith')}</Text>
           <View style={styles.divider} />
         </View>
 
@@ -129,15 +131,15 @@ const SignUp = ({ setActiveScreen }: SignUpProps) => {
 
         <View style={styles.termsContainer}>
           <Text style={styles.termsText}>
-            By clicking Create account you agree to Recognotes 
+            {t('signUp.termsAgreement')} 
           </Text>
           <View style={styles.termsLinksContainer}>
             <TouchableOpacity>
-              <Text style={styles.termsLink}>Terms of use</Text>
+              <Text style={styles.termsLink}>{t('signUp.termsOfUseLink')}</Text>
             </TouchableOpacity>
             <Text style={styles.termsText}> and </Text>
             <TouchableOpacity>
-              <Text style={styles.termsLink}>Privacy policy</Text>
+              <Text style={styles.termsLink}>{t('signUp.privacyPolicyLink')}</Text>
             </TouchableOpacity>
           </View>
         </View>
