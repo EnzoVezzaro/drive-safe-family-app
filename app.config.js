@@ -8,6 +8,7 @@ export default {
     scheme: "myapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+    backgroundColor: '#FFFFFF',
     ios: {
       supportsTablet: true,
       bundleIdentifier: process.env.BUNDLE_IDENTIFIER || "com.anonymous.drivesafefamily"
@@ -35,6 +36,18 @@ export default {
         {
           "RNMapboxMapsVersion": "11.8.0",
           "RNMapboxMapsDownloadToken": process.env.EXPO_PUBLIC_MAPBOX_SECRET_API_KEY
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/icon.png",
+          "dark": {
+            "image": "./assets/images/icon.png",
+            "backgroundColor": "#FFFFFF"
+          },
+          "imageWidth": 200
         }
       ]
     ],

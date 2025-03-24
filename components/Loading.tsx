@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 const Loading = () => {
   const { t } = useTranslation();
-
   return (
     <View style={styles.container}>
       <Image source={require('../assets/images/icon.png')} style={styles.logo} />
