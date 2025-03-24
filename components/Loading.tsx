@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, Image, StyleSheet } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { supabase } from '../lib/supabase';
 import { setAuth } from '../store/authSlice';
 import { useRouter, Redirect } from 'expo-router';
 import { RootState } from '../store';
+import { useTranslation } from 'react-i18next';
 
 const Loading = () => {
   console.log("Loading component mounted");
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   
   useEffect(() => {
     const checkSession = async () => {
@@ -30,8 +32,8 @@ const Loading = () => {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#0000ff" />
-      <Text>Loading...</Text>
+      <Image source={require('../assets/images/icon.png')} style={styles.logo} />
+      <Text>{t('loading.loading')}...</Text>
     </View>
   );
 };
@@ -41,6 +43,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 10,
+  },
+  text: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
 

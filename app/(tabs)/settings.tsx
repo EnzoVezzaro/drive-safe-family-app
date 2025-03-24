@@ -87,8 +87,8 @@ const Settings = () => {
     const showAppSettingsAlert = () => {
       const openAppSettings = () => Linking.openURL('app-settings:');
       Alert.alert(
-        'Allow Wassupp to Use your Location',
-        'Open your app settings to allow Wassupp to access your current position. Without it, you won’t be able to use the love compass',
+        'Allow DriveSafe to Use your Location',
+        'Open your app settings to allow DriveSafe to access your current position. Without it, you won’t be able to use the love compass',
         [
           { text: 'Cancel', onPress: () => console.warn('Cancel pressed') },
           { text: 'Open settings', onPress: openAppSettings },
@@ -126,10 +126,6 @@ const Settings = () => {
       dispatch(updateLocationTracking(false));
     }
   };
-
-  useEffect(() => {
-    console.log('Location tracking enabled:', locationTrackingEnabled);
-  }, [locationTrackingEnabled]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -183,24 +179,34 @@ const Settings = () => {
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <TouchableOpacity
-                style={[styles.button, styles.buttonClose]}
+                style={styles.modalOptionButton}
                 onPress={() => {
                   i18n.changeLanguage('en');
                   setSelectedLanguage('en');
                   setModalVisible(false);
                 }}
               >
-                <Text style={styles.textStyle}>{t('settings.english')}</Text>
+                <Text style={[
+                  styles.modalOptionText, 
+                  selectedLanguage === 'en' && styles.modalOptionTextSelected
+                ]}>
+                  {t('settings.english')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, styles.buttonClose]}
+                style={styles.modalOptionButton}
                 onPress={() => {
                   i18n.changeLanguage('es');
                   setSelectedLanguage('es');
                   setModalVisible(false);
                 }}
               >
-                <Text style={styles.textStyle}>{t('settings.spanish')}</Text>
+                <Text style={[
+                  styles.modalOptionText, 
+                  selectedLanguage === 'es' && styles.modalOptionTextSelected
+                ]}>
+                  {t('settings.spanish')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -244,7 +250,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   mainTitle: {
     fontSize: 26,
@@ -253,19 +259,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalView: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '80%',
+    backgroundColor: "#E5E5E5", // Light gray background
+    borderRadius: 16, // More rounded corners
+    width: '80%', // Maintain existing width
+    overflow: 'hidden', // Ensure rounded corners are respected
+  },
+  modalOptionButton: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)', // Light separator
+  },
+  modalOptionText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#000000',
+  },
+  modalOptionTextSelected: {
+    color: '#007AFF', // Blue color for selected option
+    fontWeight: 'bold',
   },
   button: {
     backgroundColor: '#FF3B30', // Nice red shade

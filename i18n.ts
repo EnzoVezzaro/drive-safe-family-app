@@ -20,7 +20,7 @@ i18next
       en: { translation: en },
       es: { translation: es },
     },
-    lng: getDeviceLanguage(), // Default language from device
+    lng: 'es', // Default language from device
     fallbackLng: 'en', // Fallback language
     interpolation: { escapeValue: false },
   });
