@@ -12,7 +12,6 @@ import MapboxGL from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 
 const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
-console.log("Mapbox access token:", accessToken);
 MapboxGL.setAccessToken(accessToken || '');
 
 const Drive = () => {

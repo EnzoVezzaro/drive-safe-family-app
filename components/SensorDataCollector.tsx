@@ -3,7 +3,7 @@ import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateAcceleration, updateLocation, updateSpeed, updateSpeedLimit, updateAlertZones, addViolationToSupabase } from '../store/drivingSlice';
-import { getSpeedLimitMapbox, sendDriverData } from '../api/trafficApi';
+import { getSpeedLimitMapbox, sendDriverData, SPEED_LIMIT_DEFAULT } from '../api/trafficApi';
 import { RootState, AppDispatch } from '../store';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
@@ -59,7 +59,7 @@ export const detectSeverity = (violationType: string, speed?: number, speedLimit
       break;
     case 'SPEEDING':
       if (speed !== undefined) {
-        const limit = speedLimit || 0
+        const limit = speedLimit || SPEED_LIMIT_DEFAULT;
         if ((speed - limit) <= SPEEDING_THRESHOLDS.LOW) {
           severity = 1;
         } else if ((speed - limit) <= SPEEDING_THRESHOLDS.MODERATE) {
@@ -107,7 +107,7 @@ export const collectSensorData = async (dispatch: AppDispatch, userId: string, d
       dispatch(updateLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude }));
       dispatch(updateSpeed(speedKMH));
       console.log('[collectSensorData] Save speed.');
-      const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude);
+      const currentSpeedLimit = await getSpeedLimitMapbox(loc.coords.latitude, loc.coords.longitude); 
       console.log('[collectSensorData] currentSpeedLimit: ', currentSpeedLimit);
       dispatch(updateSpeedLimit(currentSpeedLimit));
       console.log('[collectSensorData] Updated speed limit:', currentSpeedLimit);
