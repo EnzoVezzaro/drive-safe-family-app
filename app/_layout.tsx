@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { Provider } from 'react-redux';
 import { store, persistor } from '../store';
@@ -21,37 +21,6 @@ SplashScreen.setOptions({
 function RootLayoutInner() {
   useFrameworkReady();
 
-  /*
-  const [appIsReady, setAppIsReady] = useState(false);
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        // Tell the application to render
-        setAppIsReady(true);
-      }
-    }
-
-    prepare();
-  }, []);
-
-  const onLayoutRootView = useCallback(() => {
-    if (appIsReady) {
-      // This tells the splash screen to hide immediately! If we call this after
-      // `setAppIsReady`, then we may see a blank screen while the app is
-      // loading its initial state and rendering its first pixels. So instead,
-      // we hide the splash screen once we know the root view has already
-      // performed layout.
-      SplashScreen.hide();
-    }
-  }, [appIsReady]);
-
-  console.log('RootLayoutInner rendered', appIsReady);
-  */
  useEffect(() => {
   SplashScreen.hideAsync();
  }, []);
@@ -64,6 +33,7 @@ function RootLayoutInner() {
         initialRouteName="loading"
       >
         <Stack.Screen name="loading" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth" />
         <Stack.Screen name="+not-found" />

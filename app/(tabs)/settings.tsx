@@ -14,6 +14,7 @@ import { clearAuth } from '../../store/authSlice';
 import { updateLocation, updateLocationTracking } from '../../store/drivingSlice';
 import * as Location from 'expo-location';
 import { sendDriverData } from '@/api/trafficApi';
+import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks';
 
 const Settings = () => {
   const navigation = useNavigation<any>();
@@ -27,12 +28,6 @@ const Settings = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('es');
 
-  const handleSignOut = async () => {
-    await signOut();
-    dispatch(clearAuth());
-    navigation.replace('auth');
-  };
-
   useEffect(() => {
     if (!isLoggedIn) {
       navigation.navigate('auth');
@@ -45,6 +40,13 @@ const Settings = () => {
 
   const handleNotificationToggle = () => {
     setNotificationEnabled(!notificationEnabled);
+  };
+
+  const handleSignOut = async () => {
+    locationTrackingEnabled && await handleLocationTrackingToggle();
+    await signOut();
+    await dispatch(clearAuth()); 
+    navigation.replace('auth');
   };
 
   const handleLocationTrackingToggle = async () => {

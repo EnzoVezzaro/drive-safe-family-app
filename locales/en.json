@@ -67,7 +67,7 @@
   },
   "leaderboard": {
     "noUserId": "No user ID found in Redux store",
-    "familyChallenge": "Family Driving Challenge",
+    "familyChallenge": "Family Driving",
     "trackProgress": "Track your progress!",
     "familyLeaderboard": "Family Leaderboard",
     "loading": "Loading leaderboard...",

@@ -1,13 +1,37 @@
-import React from 'react';
-import { View, StyleSheet, Text, Image } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
+import { supabase } from '../lib/supabase';
+import { setAuth } from '../store/authSlice';
+import { useRouter, Redirect } from 'expo-router';
+import { RootState } from '../store';
 
 const Loading = () => {
-  const { t } = useTranslation();
+  console.log("Loading component mounted");
+  const dispatch = useAppDispatch();
+  
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('is loading, check section: ', session);
+
+      if (session) {
+        dispatch(setAuth({ userId: session.user.id!, email: session.user.email!, role: session.user.app_metadata.role as 'family' | 'parent' }));
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  const { hasCompletedOnboarding } = useAppSelector((state: RootState) => state.auth);
+  if (!hasCompletedOnboarding) {
+    return <Redirect href="/onboarding" />;
+  }
+
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/images/icon.png')} style={styles.logo} />
-      <Text style={styles.text}>{t('loading.loading')}</Text>
+      <ActivityIndicator size="large" color="#0000ff" />
+      <Text>Loading...</Text>
     </View>
   );
 };
@@ -17,15 +41,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 20,
-  },
-  text: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
 });
 

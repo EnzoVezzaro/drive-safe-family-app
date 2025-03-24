@@ -5,6 +5,8 @@ import SignIn from '../components/auth/SignIn';
 import ForgotPassword from '../components/auth/ForgotPassword';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { clearAuth } from '../store/authSlice';
+import * as Location from 'expo-location';
+import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks';
 
 const Auth = () => {
   const dispatch = useAppDispatch();
@@ -12,8 +14,21 @@ const Auth = () => {
 
   const [activeScreen, setActiveScreen] = useState('SignIn');
 
-  const handleSignOut = () => {
-    dispatch(clearAuth());
+  const handleSignOut = async () => {
+    const stopTracking = async () => {
+      try {
+        console.log('Stopping background tracking');
+        if (await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK)) {
+          await Location.stopLocationUpdatesAsync(BACKGROUND_FETCH_TASK);
+          console.log('Background tracking stopped');
+        }
+      } catch (error) {
+        console.error('Error stopping background tracking:', error);
+      }
+    };
+
+    await stopTracking();
+    await dispatch(clearAuth());
   };
 
   let content;

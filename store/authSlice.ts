@@ -8,6 +8,7 @@ interface AuthState {
   role: 'parent' | 'family_member' | null;
   loading: boolean;
   error: string | null;
+  hasCompletedOnboarding: boolean;
 }
 
 const initialState: AuthState = {
@@ -17,6 +18,7 @@ const initialState: AuthState = {
   role: null,
   loading: false,
   error: null,
+  hasCompletedOnboarding: false,
 };
 
 export const signUp = createAsyncThunk(
@@ -70,6 +72,10 @@ const authSlice = createSlice({
       state.email = null;
       state.isLoggedIn = false;
       state.role = null;
+      state.hasCompletedOnboarding = false;
+    },
+    setOnboardingComplete: (state) => {
+      state.hasCompletedOnboarding = true;
     },
   },
   extraReducers: (builder) => {
@@ -107,6 +113,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setAuth, clearAuth } = authSlice.actions;
+export const { setAuth, clearAuth, setOnboardingComplete } = authSlice.actions;
 
 export default authSlice.reducer;

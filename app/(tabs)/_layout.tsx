@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 export default function TabLayout() {
   const { t } = useTranslation();
   const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
+  const hasCompletedOnboarding = useAppSelector((state) => state.auth.hasCompletedOnboarding);
 
   if (!isLoggedIn) {
     return <Redirect href="/auth" />;
@@ -15,7 +16,7 @@ export default function TabLayout() {
 
   return (
     <>
-      {isLoggedIn && <SensorDataCollector />}
+      {isLoggedIn && hasCompletedOnboarding && <SensorDataCollector />}
       <Tabs
         screenOptions={{
           headerShown: false,

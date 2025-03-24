@@ -4,12 +4,12 @@ import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { supabase } from '../lib/supabase';
 import { setAuth } from '../store/authSlice';
 import { useRouter, Redirect } from 'expo-router';
+import { RootState } from '../store';
 
 const Loading = () => {
   console.log("Loading component mounted");
   const dispatch = useAppDispatch();
-  const router = useRouter();
-
+  
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -23,9 +23,13 @@ const Loading = () => {
     checkSession();
   }, []);
 
-  const { isLoggedIn } = useAppSelector((state) => state.auth);
-
+  const { isLoggedIn, hasCompletedOnboarding } = useAppSelector((state: RootState) => state.auth);
+  console.log('Aqui: ', hasCompletedOnboarding);
   if (isLoggedIn) {
+    console.log('Aqui: ', hasCompletedOnboarding);
+    if (!hasCompletedOnboarding) {
+      return <Redirect href="/onboarding" />;
+    }
     return <Redirect href="/(tabs)" />;
   } else {
     return <Redirect href="/auth" />;

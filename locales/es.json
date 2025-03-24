@@ -67,7 +67,7 @@
   },
   "leaderboard": {
     "noUserId": "No se encontró el ID de usuario en la tienda Redux",
-    "familyChallenge": "Desafío de conducción familiar",
+    "familyChallenge": "Conducción familiar",
     "trackProgress": "¡Sigue tu progreso!",
     "familyLeaderboard": "Tabla de clasificación familiar",
     "loading": "Cargando la tabla de clasificación...",
