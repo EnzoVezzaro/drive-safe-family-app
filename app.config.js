@@ -42,9 +42,12 @@ export default {
       typedRoutes: true
     },
     ios: {
+      bundleIdentifier: "com.anonymous.drivesafefamily",
       infoPlist: {
-        NSLocationAlwaysUsageDescription: "We need your location to provide better services.",
-        NSLocationWhenInUseUsageDescription: "We need your location to provide better services."
+        UIBackgroundModes: ["location"],
+        NSLocationWhenInUseUsageDescription: "We use your location to track your activity.",
+        NSLocationAlwaysUsageDescription: "We need access to your location at all times for background tracking.",
+        NSLocationAlwaysAndWhenInUseUsageDescription: "We require background location access to provide continuous tracking."
       }
     },
     android: {

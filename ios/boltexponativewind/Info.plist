@@ -46,9 +46,9 @@
       <true/>
     </dict>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your location</string>
+    <string>Allow $(PRODUCT_NAME) to use your location.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your location</string>
+    <string>We need access to your location at all times for background tracking.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Show current location on map.</string>
     <key>NSMotionUsageDescription</key>
@@ -59,6 +59,7 @@
     </array>
     <key>UIBackgroundModes</key>
     <array>
+      <string>location</string>
       <string>fetch</string>
     </array>
     <key>UILaunchStoryboardName</key>
