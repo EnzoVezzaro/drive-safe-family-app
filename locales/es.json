@@ -102,5 +102,18 @@
     "thu": "J",
     "fri": "V",
     "sat": "S"
+  },
+  "onboarding": {
+    "smartGpsTracking": "Seguimiento GPS Inteligente",
+    "protectYourFamily": "Protege a Tu Familia",
+    "userFriendlyDesign": "Diseño Fácil de Usar",
+    "permissions": "¡Permítanos acceder a su ubicación para comenzar!",
+    "smartGpsTrackingDescription": "Seguimiento GPS avanzado para mayor seguridad y conveniencia.",
+    "protectYourFamilyDescription": "Monitoreo en tiempo real para garantizar que tus seres queridos estén siempre seguros.",
+    "userFriendlyDesignDescription": "Navegación sencilla con una interfaz intuitiva para todas las edades.",
+    "permissionsDescription": "Para brindarte la mejor experiencia, necesitamos acceder a tu ubicación.",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "getStarted": "Empezar"
   }
 }

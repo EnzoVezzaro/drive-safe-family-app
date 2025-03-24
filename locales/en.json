@@ -102,5 +102,18 @@
     "thu": "T",
     "fri": "F",
     "sat": "S"
+  },
+  "onboarding": {
+    "smartGpsTracking": "Smart GPS Tracking",
+    "protectYourFamily": "Protect Your Family",
+    "userFriendlyDesign": "User-Friendly Design",
+    "permissions": "Allow us to access your location to get started!",
+    "smartGpsTrackingDescription": "Advanced GPS tracking for enhanced safety and convenience.",
+    "protectYourFamilyDescription": "Real-time monitoring to ensure your loved ones are always safe.",
+    "userFriendlyDesignDescription": "Effortless navigation with an intuitive interface for all ages.",
+    "permissionsDescription": "We need your permission to access your location to provide you with the best experience.",
+    "next": "Next",
+    "back": "Back",
+    "getStarted": "Get Started"
   }
 }

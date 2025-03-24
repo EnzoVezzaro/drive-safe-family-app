@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, SafeAreaVi
 import { useAppDispatch } from '../hooks/useRedux';
 import { setOnboardingComplete } from '../store/authSlice';
 import { useRouter } from 'expo-router';
+import i18n from '../i18n';
 
 const { width } = Dimensions.get('window');
 
@@ -10,18 +11,23 @@ const Logo = require('../assets/images/icon.png');
 
 const onboardingData = [
   {
-    title: 'GPS Solutions',
-    description: 'Providing tailored GPS management and offers tracking solutions.',
+    title: i18n.t('onboarding.smartGpsTracking'),
+    description: i18n.t('onboarding.smartGpsTrackingDescription'),
     image: Logo,
   },
   {
-    title: 'Family Safety',
-    description: 'Keep your loved ones safe with real-time location tracking.',
+    title: i18n.t('onboarding.protectYourFamily'),
+    description: i18n.t('onboarding.protectYourFamilyDescription'),
     image: Logo,
   },
   {
-    title: 'Easy to Use',
-    description: 'Simple and intuitive interface for the whole family.',
+    title: i18n.t('onboarding.userFriendlyDesign'),
+    description: i18n.t('onboarding.userFriendlyDesignDescription'),
+    image: Logo,
+  },
+  {
+    title: i18n.t('onboarding.permissions'),
+    description: i18n.t('onboarding.permissionsDescription'),
     image: Logo,
   },
 ];
@@ -37,6 +43,12 @@ const Onboarding = () => {
     } else {
       dispatch(setOnboardingComplete());
       router.navigate('/(tabs)');
+    }
+  };
+
+  const handleBack = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
     }
   };
 
@@ -79,14 +91,25 @@ const Onboarding = () => {
           ))}
         </View>
 
-        <TouchableOpacity 
-          style={styles.nextButton}
-          onPress={handleNext}
-        >
-          <Text style={styles.nextButtonText}>
-            {currentIndex === onboardingData.length - 1 ? 'Get Started' : 'Next'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            disabled={currentIndex === 0}
+            onPress={handleBack}
+          >
+            <Text style={styles.backButtonText}>
+              {i18n.t('onboarding.back')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.nextButton}
+            onPress={handleNext}
+          >
+            <Text style={styles.nextButtonText}>
+              {currentIndex === onboardingData.length - 1 ? i18n.t('onboarding.getStarted') : i18n.t('onboarding.next')}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -123,6 +146,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     color: '#333',
+    textAlign: 'center',
   },
   description: {
     fontSize: 16,
@@ -150,7 +174,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#4A3AFF',
     width: 20,
   },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   nextButton: {
+    flex: 1,
     backgroundColor: '#4A3AFF',
     padding: 16,
     borderRadius: 12,
@@ -161,6 +190,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  backButton: {
+    flex: 0.3,
+    backgroundColor: '#4A3AFF',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  backButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
 });
 
-export default Onboarding; 
+export default Onboarding;
