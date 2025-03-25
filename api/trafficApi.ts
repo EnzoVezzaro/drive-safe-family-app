@@ -8,7 +8,7 @@ type SpeedLimitCache = {
 
 const SPEED_LIMIT_CACHE: SpeedLimitCache = { latitude: undefined, longitude: undefined, speedLimit: undefined };
 export const SPEED_LIMIT_DEFAULT: number = 55;
-export const SPEED_LIMIT_THRESHOLD = 250; // 100 meters
+export const SPEED_LIMIT_THRESHOLD = 500; // 100 meters
 
 const haversine = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 6371e3; // Earth radius in meters
