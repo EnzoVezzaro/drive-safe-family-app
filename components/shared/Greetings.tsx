@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 
-const GreetingComponent = ({email}: {email: string}) => {
+const GreetingComponent = ({email}: {email?: string}) => {
   const { t } = useTranslation();
 
   return (

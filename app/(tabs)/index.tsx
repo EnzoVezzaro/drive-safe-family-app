@@ -304,7 +304,7 @@ export default function HomeScreen() {
         ) : (
           <View>
             {/* Profile Section */}
-            <GreetingComponent email={email} />
+            <GreetingComponent email={email || undefined} />
 
             {/* Start a new route */}
             <TouchableOpacity
