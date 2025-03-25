@@ -1,8 +1,8 @@
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
-import { collectSensorData } from './components/SensorDataCollector';
-import { RootState } from './store';
-import { store } from './store';
+import { collectSensorData } from '../components/SensorDataCollector';
+import { RootState } from '../store';
+import { store } from '../store';
 
 export const BACKGROUND_FETCH_TASK = 'sensor-data-fetch';
 

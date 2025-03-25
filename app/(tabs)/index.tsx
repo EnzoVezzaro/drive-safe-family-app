@@ -10,11 +10,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useAppSelector, useAuthSelector } from '../../hooks/useRedux';
 import * as Violations from '../../lib/violations';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getScores } from '@/lib/supabase';
 import Loading from '../../components/Loading';
 import { supabase } from '../../lib/supabase';
 import Svg, { Circle, G, LinearGradient, Defs, Stop } from 'react-native-svg';
+import GreetingComponent from '@/components/shared/Greetings';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -304,27 +304,7 @@ export default function HomeScreen() {
         ) : (
           <View>
             {/* Profile Section */}
-            <View style={styles.headerCard}>
-              <View style={styles.profileSection}>
-                <View style={styles.avatarContainer}>
-                  <View style={styles.avatar}>
-                    <MaterialCommunityIcons name="account" size={36} color="white" />
-                  </View>
-                  {/**
-                   * TODO: premium users
-                   * <View style={styles.starBadge}>
-                    <Text style={styles.starText}>★</Text>
-                  </View>
-                   */}
-                </View>
-                <View style={styles.userInfo}>
-                  <Text style={styles.userName}>
-                    {t('home.hi')} {email}
-                  </Text>
-                  <Text style={styles.userSubtext}>{t('home.glad')}</Text>
-                </View>
-              </View>
-            </View>
+            <GreetingComponent email={email} />
 
             {/* Start a new route */}
             <TouchableOpacity
@@ -448,55 +428,6 @@ const styles = StyleSheet.create({
     flex: 0,
     paddingHorizontal: 16,
     paddingBottom: 16,
-  },
-  headerCard: {
-    backgroundColor: '#343b6e',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#4A5297',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  starBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#9370DB',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  starText: {
-    color: 'white',
-    fontSize: 12,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  userSubtext: {
-    color: '#d0d0d0',
-    fontSize: 14,
   },
   startRouteButton: {
     backgroundColor: '#3dc2ff',

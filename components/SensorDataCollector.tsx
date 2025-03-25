@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,10 +10,11 @@ import { supabase } from '../lib/supabase';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { point } from '@turf/helpers';
 import Modal from 'react-native-modal';
-import { View, StyleSheet, TouchableOpacity, Text, AppState, AppStateStatus } from 'react-native';
-import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks';
+import { View, StyleSheet, TouchableOpacity, Text, AppState } from 'react-native';
+import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks/backgroundTasks';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
+import { BACKGROUND_ACCELERATION_FETCH_TASK } from '@/backgroundTasks/AccelerationBackgroundTasks';
 
 interface LocationObject {
   latitude: number | null;
@@ -50,7 +51,15 @@ export const SPEEDING_THRESHOLDS = {
 
 export const DISTANCE_THRESHOLD = 100; // 100 meters
 
-export const detectSeverity = (violationType: string, speed?: number, speedLimit?: number) => {
+const ACCELERATION_THRESHOLD = 12; // Minimum acceleration to trigger violation
+const CHANGE_THRESHOLD = 6; // Minimum sudden increase or drop to detect violation
+const DECELERATION_THRESHOLD = -6; // Minimum sudden decrease to trigger violation (e.g., accident or hard brake)
+const WINDOW_SIZE = 5; // How many previous values to keep
+const UPDATE_INTERVAL = 1000; // Sensor update interval (ms)
+let accelerationHistory: number[] = []; // Persistent history outside component
+let lastAcceleration = 0;
+  
+export const detectSeverity = (violationType: string, speed?: number, speedLimit?: number, acceleration?: number) => {
   let severity = 1;
 
   switch (violationType) {
@@ -79,6 +88,37 @@ export const detectSeverity = (violationType: string, speed?: number, speedLimit
     case 'CROSSWALK':
       severity = 3;
       break;
+    case 'ACCELERATION':
+      if (acceleration !== undefined) {
+        if (acceleration < 3) { // Low acceleration: severity 3
+          severity = 1;
+        } else if (acceleration >= 3 && acceleration < 5) { // Moderate acceleration: severity 4
+          severity = 3;
+        } else if (acceleration >= 5 && acceleration < 10) { // Moderate acceleration: severity 4
+          severity = 4;
+        } else { // High acceleration: severity 5
+          severity = 5;
+        }
+      } else {
+        severity = 1; // Default to moderate severity if acceleration is unavailable
+      }
+      break;
+    case 'DECELERATION':
+      if (acceleration !== undefined) {
+        if (acceleration < -10) { // Sudden drop in acceleration: severity 5
+          severity = 5;
+        } else if (acceleration >= -5 && acceleration < -10) { // High deceleration: severity 4
+          severity = 4;
+        } else if (acceleration >= -3 && acceleration < -5) { // Moderate deceleration: severity 3
+          severity = 3;
+        } else if (acceleration >= -3) { // Small deceleration or no deceleration: severity 1
+          severity = 1;
+        }        
+      } else {
+        severity = 1; // Default to moderate severity if acceleration is unavailable
+      }
+      break;
+    break;
     case 'GEOFENCE':
     case 'GEOFENCE_VIOLATION':
       severity = 1;
@@ -152,17 +192,53 @@ export const collectSensorData = async (dispatch: AppDispatch, userId: string, d
   }
 };
 
+export const collectAccelerationData = async (dispatch: AppDispatch, userId: string) => {
+  console.log('[setupAcceleration] Setting up acceleration tracking');
+  Accelerometer.setUpdateInterval(UPDATE_INTERVAL); 
+  console.log('[setupAcceleration] Setting up time interval: ', UPDATE_INTERVAL);
+  Accelerometer.addListener((data) => {
+    const newAcceleration = Math.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2);
+    console.log('[setupAcceleration]: ', newAcceleration);
+    dispatch(updateAcceleration(newAcceleration)); // ✅ Dispatch latest value
+
+    // Maintain a fixed-size history array
+    accelerationHistory.push(newAcceleration);
+    if (accelerationHistory.length > WINDOW_SIZE) {
+      accelerationHistory.shift(); // Remove the oldest value
+    }
+
+    console.log('[setupAcceleration] new accelation: ', newAcceleration);
+
+    const accelerationChange = newAcceleration - lastAcceleration;
+    lastAcceleration = newAcceleration; // Update last acceleration
+
+    // 🚨 Fire violation if there's a sudden spike in acceleration (acceleration increase)
+    if (accelerationChange > CHANGE_THRESHOLD && newAcceleration > ACCELERATION_THRESHOLD) {
+      const violationCode = "ACCELERATION";
+      const severity = detectSeverity(violationCode, 0, 0, newAcceleration);
+      console.log('[setupAcceleration] new violation ACCELERATION: ', severity, newAcceleration);
+      dispatch(addViolationToSupabase({ userId, violationCode, severity }));
+      console.log(`Violation logged: ${violationCode}, Severity: ${severity}`);
+    }
+
+    // 🚨 Fire violation for sudden deceleration (acceleration drop) indicating an emergency or accident
+    if (accelerationChange < DECELERATION_THRESHOLD && newAcceleration < ACCELERATION_THRESHOLD) {
+      const violationCode = "DECELERATION";
+      const severity = detectSeverity(violationCode, 0, 0, newAcceleration);
+      console.log('[setupAcceleration] new violation DECELERATION: ', severity, newAcceleration);
+      dispatch(addViolationToSupabase({ userId, violationCode, severity }));
+      console.log(`Violation logged: ${violationCode}, Severity: ${severity}`);
+    }
+  });
+}
+
 const SensorDataCollector = () => {
   const { t } = useTranslation();
   console.log('SensorDataCollector is running');
-  const [location, setLocation] = useState<LocationObject>({
-    latitude: null,
-    longitude: null,
-  });
   const [speed, setSpeed] = useState(0);
-  const [acceleration, setAcceleration] = useState(0);
   const dispatch: AppDispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.auth.userId);
+  const speedLimit = useSelector((state: RootState) => state.driving.speedLimit);
   const locationTrackingEnabled = useSelector((state: RootState) => state.driving.locationTrackingEnabled);
   const [dangerZones, setDangerZones] = useState<DangerZone[]>([]);
   const [isViolationModalVisible, setViolationModalVisible] = useState(false);
@@ -174,14 +250,18 @@ const SensorDataCollector = () => {
   const [isRegistered, setIsRegistered] = useState(false);
   const [status, setStatus] = useState<BackgroundFetch.BackgroundFetchStatus | null>(null);
   const [locationStarted, setLocationStarted] = useState(false);
-  const [appState, setAppState] = useState(AppState.currentState);
+  const [accelerationStarted, setAccelerationStarted] = useState(false);
   const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
+  const [locationSubscriptionAcc, setLocationSubscriptionAcc] = useState<Location.LocationSubscription | null>(null);
+  const [acceleration, setAcceleration] = useState(0);
 
   const checkStatusAsync = async () => {
     const statusBackground = await BackgroundFetch.getStatusAsync();
     console.log('Checking background status: ', statusBackground);
     const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
     console.log('Checking background register: ', isRegistered);
+    const isAccRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_ACCELERATION_FETCH_TASK);
+    console.log('Checking acceleration background register: ', isAccRegistered);
     setStatus(statusBackground);
     setIsRegistered(isRegistered);
     console.log('Status: ', BackgroundFetch.BackgroundFetchStatus[statusBackground || 0]);
@@ -281,10 +361,59 @@ const SensorDataCollector = () => {
     });
   };
 
+  const startBackgroundTrackingAcc = async () => {
+    try {
+      console.log('Starting background acceleration tracking');
+      // First check if background tracking is already running
+      const isRunningAcc = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_ACCELERATION_FETCH_TASK).catch(() => false);
+      if (isRunningAcc) {
+        console.log('Background Acceleration tracking is already running');
+        setAccelerationStarted(true);
+        if (userId){
+          collectAccelerationData(dispatch, userId);
+        }
+        return;
+      }
+      
+      // running background location
+      await Location.startLocationUpdatesAsync(BACKGROUND_ACCELERATION_FETCH_TASK, {
+        accuracy: Location.Accuracy.Low,
+        timeInterval: UPDATE_INTERVAL,
+        foregroundService: {
+          notificationTitle: "Location Tracking",
+          notificationBody: "Tracking your driving activity"
+        }
+      });
+      
+      const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_ACCELERATION_FETCH_TASK);
+      setAccelerationStarted(hasStarted);
+      if (userId){
+        collectAccelerationData(dispatch, userId);
+      }
+      console.log('Background tracking started:', hasStarted );
+    } catch (error) {
+      console.error('Error starting background tracking:', error);
+    }
+  };
+
+  const stopBackgroundAccTracking = async () => {
+    try {
+      console.log('Stopping background tracking');
+      if (await Location.hasStartedLocationUpdatesAsync(BACKGROUND_ACCELERATION_FETCH_TASK)) {
+        await Location.stopLocationUpdatesAsync(BACKGROUND_ACCELERATION_FETCH_TASK);
+        setAccelerationStarted(false);
+        console.log('Background acceleration tracking stopped');
+        locationSubscriptionAcc?.remove();
+        setLocationSubscriptionAcc(null);
+      }
+    } catch (error) {
+      console.error('Error stopping background acceleration tracking:', error);
+    }
+  };
+
   const startBackgroundTracking = async () => {
     try {
       console.log('Starting background tracking');
-
       // First check if background tracking is already running
       const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK).catch(() => false);
       if (isRunning) {
@@ -293,6 +422,7 @@ const SensorDataCollector = () => {
         return;
       }
       
+      // running background location
       await Location.startLocationUpdatesAsync(BACKGROUND_FETCH_TASK, {
         accuracy: Location.Accuracy.BestForNavigation,
         distanceInterval: DISTANCE_THRESHOLD,
@@ -306,7 +436,7 @@ const SensorDataCollector = () => {
       
       const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_FETCH_TASK);
       setLocationStarted(hasStarted);
-      console.log('Background tracking started:', hasStarted);
+      console.log('Background tracking started:', hasStarted );
     } catch (error) {
       console.error('Error starting background tracking:', error);
     }
@@ -341,7 +471,7 @@ const SensorDataCollector = () => {
     const currentSpeed = loc?.coords?.speed || 0;
     dispatch(updateSpeed(currentSpeed));
     setSpeed(currentSpeed);
-    
+
     // Process geofences if needed
     checkGeofences(loc);
     
@@ -437,7 +567,7 @@ const SensorDataCollector = () => {
           throttledLocationUpdate(loc);
         }
       );
-      
+
       setLocationSubscription(subscription);
       console.log('Foreground tracking started');
     } catch (error) {
@@ -475,10 +605,12 @@ const SensorDataCollector = () => {
           await startForegroundTracking();
           setTimeout(async () => {
             await startBackgroundTracking();
+            await startBackgroundTrackingAcc();
           }, 2000);
         } else {
           console.log('App is in background, starting background tracking');
-          // await startBackgroundTracking();
+          await startBackgroundTracking();
+          await startBackgroundTrackingAcc();
         }
       } catch (error) {
         console.error('Error in setupLocationTracking:', error);
@@ -488,9 +620,9 @@ const SensorDataCollector = () => {
     setupLocationTracking();
   }, []);
 
-  // Accelerometer setup
   useEffect(() => {
     Accelerometer.setUpdateInterval(200);
+
     const subscription = Accelerometer.addListener((data) => {
       const calculatedAcceleration = Math.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2);
       setAcceleration(calculatedAcceleration);
@@ -500,18 +632,65 @@ const SensorDataCollector = () => {
     return () => subscription.remove();
   }, [dispatch]);
 
+  // Accelerometer setup
+  /*
+  useEffect(() => {
+    Accelerometer.setUpdateInterval(UPDATE_INTERVAL); 
+
+    const subscription = Accelerometer.addListener((data) => {
+      const newAcceleration = Math.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2);
+
+      setAcceleration(newAcceleration); // ✅ Update latest acceleration in state
+      dispatch(updateAcceleration(newAcceleration)); // ✅ Dispatch latest value
+
+      // Maintain a fixed-size history array
+      accelerationHistory.push(newAcceleration);
+      if (accelerationHistory.length > WINDOW_SIZE) {
+        accelerationHistory.shift(); // Remove the oldest value
+      }
+
+      console.log('new accelation: ', newAcceleration);
+
+      const accelerationChange = newAcceleration - lastAcceleration.current;
+      lastAcceleration.current = newAcceleration; // Update last acceleration
+
+      // 🚨 Fire violation if there's a sudden spike in acceleration (acceleration increase)
+      if (accelerationChange > CHANGE_THRESHOLD && newAcceleration > ACCELERATION_THRESHOLD && userId) {
+        const violationCode = "ACCELERATION";
+        const severity = detectSeverity(violationCode, speed, speedLimit, newAcceleration);
+
+        dispatch(addViolationToSupabase({ userId, violationCode, severity }));
+        console.log(`Violation logged: ${violationCode}, Severity: ${severity}`);
+      }
+
+      // 🚨 Fire violation for sudden deceleration (acceleration drop) indicating an emergency or accident
+      if (accelerationChange < DECELERATION_THRESHOLD && newAcceleration < ACCELERATION_THRESHOLD && userId) {
+        const violationCode = "DECELERATION";
+        const severity = detectSeverity(violationCode, speed, speedLimit, newAcceleration);
+
+        dispatch(addViolationToSupabase({ userId, violationCode, severity }));
+        console.log(`Violation logged: ${violationCode}, Severity: ${severity}`);
+      }
+    });
+
+    return () => subscription.remove();
+  }, [dispatch, userId, speed, speedLimit]);
+  */
+
   useEffect(() => {
     console.log('[locationTrackingEnabled] Location tracking:', locationTrackingEnabled);
     if (locationTrackingEnabled){
-      console.log('[locationTrackingEnabled] Starting again tracking');
+      console.log('[locationTrackingEnabled] Starting location tracking');
       startForegroundTracking();
       setTimeout(async () => {
         await startBackgroundTracking();
+        await startBackgroundTrackingAcc();
       }, 2000);
     } else {
       console.log('[locationTrackingEnabled] Shutting down tracking');
       stopForegroundTracking();
       stopBackgroundTracking();
+      stopBackgroundAccTracking();
     }
   }, [locationTrackingEnabled]);
 

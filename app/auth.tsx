@@ -6,7 +6,7 @@ import ForgotPassword from '../components/auth/ForgotPassword';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { clearAuth } from '../store/authSlice';
 import * as Location from 'expo-location';
-import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks';
+import { BACKGROUND_FETCH_TASK } from '../backgroundTasks/backgroundTasks';
 
 const Auth = () => {
   const dispatch = useAppDispatch();
@@ -34,8 +34,8 @@ const Auth = () => {
   let content;
   if (isLoggedIn) {
     content = (
-      <View style={styles.content}>
-        <Text style={styles.title}>You are logged in!</Text>
+      <View>
+        <Text>You are logged in!</Text>
         <Button title="Sign Out" onPress={handleSignOut} />
       </View>
     );

@@ -14,7 +14,6 @@ import { clearAuth } from '../../store/authSlice';
 import { updateLocation, updateLocationTracking } from '../../store/drivingSlice';
 import * as Location from 'expo-location';
 import { sendDriverData } from '@/api/trafficApi';
-import { BACKGROUND_FETCH_TASK } from '@/backgroundTasks';
 
 const Settings = () => {
   const navigation = useNavigation<any>();

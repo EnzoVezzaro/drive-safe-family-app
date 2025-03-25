@@ -96,7 +96,7 @@ const Drive = () => {
 
   const speedKmh = (speed * 1.60934).toFixed(0);
 
-  console.log('location: ', location);
+  console.log('[Drive]: ', acceleration);
   
   // Helper function to get zone type
   const getZoneTypeFromLabel = (label: string) => {
