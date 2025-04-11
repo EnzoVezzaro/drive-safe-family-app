@@ -13,9 +13,8 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-# @generated begin @rnmapbox/maps-rnmapboxmapsimpl - expo prebuild (DO NOT MODIFY) sync-dbc2db9126f38928de4a1d3abc0560539eb0d5e7
+# @generated begin @rnmapbox/maps-rnmapboxmapsimpl - expo prebuild (DO NOT MODIFY) sync-31180c2e4bc68953640ecfbc0abd004f7e21fd5c
 $RNMapboxMapsDownloadToken = 'sk.eyJ1IjoiZW56by1qdW5vci12ZXp6YXJvIiwiYSI6ImNtOGVsc3o4dTAycTEyc290bzl4ZmNvbW0ifQ.5SNQ2fsGqKTk2nFE26k5fg'
-$RNMapboxMapsVersion = '11.8.0'
 # @generated end @rnmapbox/maps-rnmapboxmapsimpl
 target 'drivesafefamily' do
   use_expo_modules!
@@ -65,17 +64,6 @@ target 'drivesafefamily' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
-
-    # Exclude arm64 for the iOS simulator build
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        if config.name == 'Debug' || config.name == 'Release'  # This applies to both Debug and Release, but you can adjust as needed
-          if target.name != 'React-Core' # Avoid excluding arm64 from essential targets like React-Core
-            config.build_settings['EXCLUDED_ARCHITECTURES'] = 'arm64' # Exclude arm64 for the simulator
-          end
-        end
-      end
-    end
 
     # This is necessary for Xcode 14, because it signs resource bundles by default
     # when building for devices.

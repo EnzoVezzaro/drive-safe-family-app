@@ -9,6 +9,7 @@
     "build:web": "expo export --platform web",
     "lint": "expo lint",
     "api:dev": "node api/server.js",
+    "build:android": "cd andrid && ./gradlew assembleRelease",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },

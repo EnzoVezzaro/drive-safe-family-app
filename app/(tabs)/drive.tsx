@@ -8,11 +8,11 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootParamList } from '../../types';
 import { useAppSelector } from '../../hooks/useRedux';
 import { useTranslation } from 'react-i18next';
-import MapboxGL from '@rnmapbox/maps';
+import Mapbox from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 
-const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY;
-MapboxGL.setAccessToken(accessToken || '');
+const accessToken = process.env.EXPO_PUBLIC_MAPBOX_API_KEY; 
+Mapbox.setAccessToken(accessToken || '');
 
 const Drive = () => {
   const { t } = useTranslation();
@@ -127,19 +127,19 @@ const Drive = () => {
       const zoneColor = getZoneColor(zoneType);
       
       return (
-        <MapboxGL.ShapeSource
+        <Mapbox.ShapeSource
           key={`alert-zone-${zone.id || index}`}
           id={`alert-zone-source-${zone.id || index}`}
           shape={zone.coordinates}
         >
-          <MapboxGL.FillLayer
+          <Mapbox.FillLayer
             id={`alert-zone-fill-${zone.id || index}`}
             style={{
               fillColor: zoneColor,
               fillOpacity: 0.3,
             }}
           />
-          <MapboxGL.LineLayer
+          <Mapbox.LineLayer
             id={`alert-zone-line-${zone.id || index}`}
             style={{
               lineColor: zoneColor,
@@ -147,7 +147,7 @@ const Drive = () => {
               lineOpacity: 0.8,
             }}
           />
-          <MapboxGL.SymbolLayer
+          <Mapbox.SymbolLayer
             id={`alert-zone-label-${zone.id || index}`}
             style={{
               textField: zone.label || `Alert Zone ${index + 1}`,
@@ -159,7 +159,7 @@ const Drive = () => {
               textAllowOverlap: true,
             }}
           />
-        </MapboxGL.ShapeSource>
+        </Mapbox.ShapeSource>
       );
     });
   };
@@ -260,28 +260,28 @@ const Drive = () => {
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
-        <MapboxGL.MapView 
+        <Mapbox.MapView 
           ref={mapRef}
           style={styles.map} 
           styleURL="mapbox://styles/mapbox/streets-v11" 
         >
           {location && location.latitude && location.longitude && (
             <>
-              <MapboxGL.Camera 
+              <Mapbox.Camera 
                 ref={cameraRef}
                 centerCoordinate={[location.longitude, location.latitude]} 
                 zoomLevel={zoomLevel} 
                 animationMode="flyTo"
               />
-              <MapboxGL.PointAnnotation id="user-location" coordinate={[location.longitude, location.latitude]}>
+              <Mapbox.PointAnnotation id="user-location" coordinate={[location.longitude, location.latitude]}>
                 <View style={styles.userMarker} />
-              </MapboxGL.PointAnnotation>
+              </Mapbox.PointAnnotation>
             </>
           )}
           
           {/* Render Alert Zones */}
           {renderAlertZones()}
-        </MapboxGL.MapView>
+        </Mapbox.MapView>
 
         {/* Location and Zoom Controls */}
         <View style={styles.mapControlsContainer}>
